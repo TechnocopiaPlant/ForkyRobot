@@ -192,16 +192,10 @@ Transform newBatt = new Transform()
 	.movey(gridUnits/2.0+gridUnits*3)
 	.movex(gridUnits*2)
 	
-def notch = new Cube(gridUnits*4,gridUnits*3,gridUnits).toCSG()
-		.movez(rideHeight)
-		.toXMin()
-		.toYMax()
-		.movex(gridUnits*2.5)
-		.movey(gridUnits*1.5)
+
 
 batteryBox=batteryBox.transformed(newBatt)
 battery=battery.transformed(newBatt)
-			.union(notch)
 
 batteryBox.setName("batteryBox")
 batteryBox.setManufacturing({ toMfg ->
@@ -315,20 +309,8 @@ def shortsensor=sensor.transformed(moveSensor)
 def shortsensorStandOff=sensorStandOff.transformed(moveSensor)
 			.difference(movedCastor)
 
-def longsensorPlate=sensorPlate.transformed(longSensor)
-def longsensor=longSensorModel.transformed(longSensor)
-def longsensorStandOff=sensorStandOffLong.transformed(longSensor)
 
-CSG kickStand = new Cube (20,batteryBox.getMinY()-longsensorStandOff.getMaxY(),20).toCSG()
-				.toYMin()
-				.toZMin()
-				.movey(longsensorStandOff.getMaxY())
-				.movex(gridUnits*4.5)
-				.movez(longsensorStandOff.getMinZ())
 
-longsensorStandOff=longsensorStandOff.union(kickStand)
-
-//return [	battery,batteryBox,standoffLeft,standoffRight,leftHinge,rightHinge,cableGuide,shortsensorPlate,shortsensor,shortsensorStandOff,movedCastor,longsensorPlate,longsensor,longsensorStandOff]
 
 double washerThick = 1
 def motorOptions = []
@@ -797,17 +779,7 @@ shortsensorPlate.setName("shortplate")
 			.toZMin()
 })
 
-longsensorStandOff.setName("longsensorStandOff")
-	.setManufacturing({ toMfg ->
-	return toMfg
-			.toZMin()
-})
-longsensorPlate.addExportFormat("svg")// make an svg of the object
-longsensorPlate.setName("longplate")
-	.setManufacturing({ toMfg ->
-	return toMfg
-			.toZMin()
-})
+
 println "BottomOfPlate = "+BottomOfPlate
 println "Plate dimentions x="+plate.getTotalX()+" y="+plate.getTotalY()
 println "Weel center line to outer wall of bracket="+Math.abs(bracket.getMinX())
@@ -820,8 +792,8 @@ plate2,
 leftHinge,rightHinge,
 cableGuide,
 shortsensorPlate,
-shortsensorStandOff,
-longsensorPlate,longsensorStandOff
+shortsensorStandOff
+
 ]
 return parts
 
