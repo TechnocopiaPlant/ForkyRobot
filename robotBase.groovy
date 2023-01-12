@@ -1,3 +1,13 @@
+import com.neuronrobotics.bowlerstudio.vitamins.Vitamins
+
+import eu.mihosoft.vrl.v3d.CSG
+import eu.mihosoft.vrl.v3d.Cube
+import eu.mihosoft.vrl.v3d.Cylinder
+import eu.mihosoft.vrl.v3d.Sphere
+import eu.mihosoft.vrl.v3d.Transform
+import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
+import eu.mihosoft.vrl.v3d.parametrics.StringParameter
+
 println "Loading 200x robot"
 def mm(def inches){
 	return inches*25.4
