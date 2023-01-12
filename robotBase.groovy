@@ -409,7 +409,7 @@ bearing2 = bearing.movex(bearing.getTotalX() -gearBThickness-wheelSectionThickne
 			.movex( gearBThickness-bevelGears.get(2)+washerThick)
 			)
 CSG outputGear = bevelGears.get(0)
-CSG supportOutputGear = new Cylinder(12.8/2.0,
+CSG supportOutputGear = new Cylinder(13.0/2.0,
 	Math.abs(motorToMountPlaneMinusShoulder)).toCSG()
 					.toZMax()
 outputGear=outputGear.union(	supportOutputGear)
