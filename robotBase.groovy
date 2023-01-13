@@ -188,9 +188,9 @@ batteryHoles])
 
 Transform newBatt = new Transform()
 	.movex(-centerline)
-	.rotz(90)
-	.movey(gridUnits/2.0+gridUnits*3)
-	.movex(gridUnits*2)
+	//.rotz(90)
+	//.movey(gridUnits/2.0+gridUnits*3)
+	.movex(gridUnits*4.5)
 	
 
 
@@ -204,7 +204,7 @@ batteryBox.setManufacturing({ toMfg ->
 			.toZMin()
 })
 
-//return [batteryBox,battery]
+//return [batteryBox,battery,batteryHoles]
 
 CSG standoffCore = new Cylinder(standOffRadius,electronicsBayStandoff).toCSG()
 CSG boltHole = new Cylinder(2.5+0.25,electronicsBayStandoff).toCSG()
@@ -553,9 +553,13 @@ println "Making bracket assembly"
 def bracket = CSG.unionAll([motorPlate,leftCone,rightCone,sideWallBarL,
 sideWallBarR,
 backPlate
-]).difference([wheelMountHole,wheelwell,gearHole])
-.union(rightCone) 
-.difference([axelBolt,motorBlank,
+])
+println "subtracting holes"
+bracket=bracket.difference([wheelMountHole,wheelwell,gearHole])
+println "Union COne"
+bracket=bracket.union(rightCone) 
+println "Subtract Mounts"
+bracket=bracket.difference([axelBolt,motorBlank,
 axelMount,
 lSideGrid,
 //rSideGrid,
