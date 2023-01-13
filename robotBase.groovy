@@ -328,8 +328,10 @@ StringParameter shafts = new StringParameter("Shaft Type","dShaft",shaftOptions)
 StringParameter motorSize = new StringParameter("Motor Size","WPI-gb37y3530-50en",Vitamins.listVitaminSizes(motors.getStrValue()))
 StringParameter shaftSize = new StringParameter("Shaft Size","WPI-gb37y3530-50en",Vitamins.listVitaminSizes(shafts.getStrValue()))
 printerOffset.setMM(0.5)
+println "Loading Motor"
 def motorBlank= Vitamins.get(motors.getStrValue(),motorSize.getStrValue()).rotz(180)
 printerOffset.setMM(0.1)
+println "Loading shaft"
 def shaftBlank= Vitamins.get(shafts.getStrValue(),shaftSize.getStrValue())
 printerOffset.setMM(0.25)
 HashMap<String, Object>  motorData = Vitamins.getConfiguration( motors.getStrValue(),motorSize.getStrValue())
@@ -567,10 +569,9 @@ wheelMountGrid
 ])
 .union(rightCone.intersect(rightCone.getBoundingBox().movex(0.25)).movez(-19).movex(-0.25))  
 println "Making wheel assembly"
-def wheelAsmb = CSG.unionAll([adrive,wheelCore
-]).difference([axelBolt,tire,bearing,bearing2
-
-])
+def wheelAsmb = CSG.unionAll([adrive,wheelCore])
+println "Differencing axelBolt,tire,bearing,bearing2"
+wheelAsmb=wheelAsmb.difference([axelBolt,tire,bearing,bearing2])
 println "Making gear cutouts"
 def driveGear = outputGear.difference([shaftBlank,motorBlank])
 println "Making left side bracket"
