@@ -5,6 +5,7 @@ import eu.mihosoft.vrl.v3d.Cube
 import eu.mihosoft.vrl.v3d.Cylinder
 import eu.mihosoft.vrl.v3d.Sphere
 import eu.mihosoft.vrl.v3d.Transform
+import eu.mihosoft.vrl.v3d.parametrics.CSGDatabase
 import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
 
@@ -347,10 +348,10 @@ double width = mm(3.0/16.0)
 double axilToRideHeight = rideHeight-(tireOD/2)
 double sweepCenter = (double)(tireOD+tireID)/4.0
 def tire = CSG.unionAll(
-		Extrude.revolve(new Cylinder(width/2-printerOffset.getMM()/2,1.0).toCSG().roty(90),
+		Extrude.revolve(new Cylinder(width/2-printerOffset.getMM()/2,1.0,6).toCSG().roty(90),
 		sweepCenter, // rotation center radius, if 0 it is a circle, larger is a donut. Note it can be negative too
 		(double)360,// degrees through wich it should sweep
-		(int)30)//number of sweep increments
+		(int)20)//number of sweep increments
 		)
 		.roty(90)
 def bearing =Vitamins.get("ballBearing","695zz").hull().makeKeepaway(printerOffset.getMM()).toZMin()
@@ -548,7 +549,7 @@ def wheelMountGrid = nutGrid
 			.movez(  bevelGears.get(3))
 			.movey(motorPlate.getMaxY() )
 			.movex( wheelCenterlineX)		
-def gearHole =  new Cylinder(bevelGears.get(0).getMaxX()+1,motorToMountPlane).toCSG() 
+def gearHole =  new Cylinder(bevelGears.get(0).getMaxX()-0.5,motorToMountPlane).toCSG() 
 				.toZMax()     
 println "Making bracket assembly"
 // FInal assembly section				
