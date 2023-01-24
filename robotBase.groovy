@@ -625,12 +625,18 @@ standoffPart=	standoffPart.difference(	movedCastor)
 			//.difference(	nutsertGridPlate)	
 wheelAsmb=driveSection[3]
 wheelAsmb.setColor(Color.PINK)
+
 println "Mirroring drive section"
 bracketm=driveSection[2]//.difference(nutsertGridPlate)
 bracket=driveSection[1]//.difference(nutsertGridPlate)
+
 driveGear=driveSection[0]
 tire = driveSection[4]
 motorBlank = driveSection[5]
+bracket.setColor(Color.WHITE)
+bracketmsetColor(Color.IVORY)
+tire.setColor(Color.BLACK)
+
 def driveGearl = driveGear.mirrorx().movex(wheelbase)
 def wheelAsmbl = wheelAsmb.mirrorx().movex(wheelbase)
 def tirel = tire.mirrorx().movex(wheelbase)
