@@ -602,8 +602,6 @@ def standoffPart =CSG.unionAll([ 	new Cylinder(gridUnits/2,standoffHeight).toCSG
 				.movex( gridUnits*wheelbaseIndex/2)
 				.movey(castorDistanceY)
 
-standoffPart=	standoffPart.difference(	movedCastor)	
-
 println "Making hole grid"
 def nutsertGridPlate= []
 def netmoverP= new Cylinder(5.0/2,standoffHeight/2).toCSG()
@@ -622,6 +620,8 @@ for(int i=0;i<8;i++)
 // 
 println "Cutting castor"
 standoffPart=	standoffPart.difference(	movedCastor)	
+standoffPart.setColor(Color.IVORY)
+
 			//.difference(	nutsertGridPlate)	
 wheelAsmb=driveSection[3]
 wheelAsmb.setColor(Color.PINK)
@@ -634,7 +634,7 @@ driveGear=driveSection[0]
 tire = driveSection[4]
 motorBlank = driveSection[5]
 bracket.setColor(Color.WHITE)
-bracketmsetColor(Color.IVORY)
+bracketm.setColor(Color.IVORY)
 tire.setColor(Color.BLACK)
 
 def driveGearl = driveGear.mirrorx().movex(wheelbase)
@@ -651,10 +651,12 @@ def plateCubic = new Cube(plateRadius*2,gridUnits*(wheelbaseIndexY+2),plateThick
 				.toYMin()
 				.move(centerline,-gridUnits*1.5,BottomOfPlate)
 println "Cutting grid from plate, may take a while..."
-def plate =  plateRound
+CSG plate =  plateRound
 				.intersect(plateCubic)
 				.difference(nutsertGridPlate)
 				.difference(battery)
+plate.setColor(Color.BROWN)
+
 def plate2 = plate .movez(electronicsBayStandoff+plateThickness)
 println "Plate Dimentions "+(plateRadius*2.0/25.4)+"\" by "+(plate.getTotalY()/25.4)+"\""
 println "Making mfg scripts "
