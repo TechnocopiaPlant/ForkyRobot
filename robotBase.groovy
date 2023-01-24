@@ -8,6 +8,7 @@ import eu.mihosoft.vrl.v3d.Transform
 import eu.mihosoft.vrl.v3d.parametrics.CSGDatabase
 import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
+import javafx.scene.paint.Color
 
 println "Loading 200x robot"
 def mm(def inches){
@@ -548,8 +549,9 @@ def wheelMountGrid = nutGrid
 			.rotz(-90)
 			.movez(  bevelGears.get(3))
 			.movey(motorPlate.getMaxY() )
-			.movex( wheelCenterlineX)		
-def gearHole =  new Cylinder(bevelGears.get(0).getMaxX()-0.5,motorToMountPlane).toCSG() 
+			.movex( wheelCenterlineX)	
+CSG gearForMeasure = bevelGears.get(0)	
+def gearHole =  new Cylinder(gearForMeasure.getTotalX()/2,motorToMountPlane).toCSG() 
 				.toZMax()     
 println "Making bracket assembly"
 // FInal assembly section				
@@ -570,7 +572,7 @@ wheelMountGrid
 ])
 .union(rightCone.intersect(rightCone.getBoundingBox().movex(0.25)).movez(-19).movex(-0.25))  
 println "Making wheel assembly"
-def wheelAsmb = CSG.unionAll([adrive,wheelCore])
+CSG wheelAsmb = CSG.unionAll([adrive,wheelCore])
 println "Differencing axelBolt,tire,bearing,bearing2"
 wheelAsmb=wheelAsmb.difference([axelBolt,tire,bearing,bearing2])
 println "Making gear cutouts"
@@ -622,6 +624,7 @@ println "Cutting castor"
 standoffPart=	standoffPart.difference(	movedCastor)	
 			//.difference(	nutsertGridPlate)	
 wheelAsmb=driveSection[3]
+wheelAsmb.setColor(Color.PINK)
 println "Mirroring drive section"
 bracketm=driveSection[2]//.difference(nutsertGridPlate)
 bracket=driveSection[1]//.difference(nutsertGridPlate)
