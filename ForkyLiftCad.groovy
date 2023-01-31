@@ -1,11 +1,14 @@
 import com.neuronrobotics.bowlerstudio.creature.ICadGenerator
 import com.neuronrobotics.bowlerstudio.vitamins.Vitamins
+import com.neuronrobotics.sdk.addons.kinematics.DHLink
 import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
 import com.neuronrobotics.sdk.addons.kinematics.MobileBase
+import com.neuronrobotics.sdk.addons.kinematics.math.TransformNR
 
 import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cube
 import eu.mihosoft.vrl.v3d.Cylinder
+import eu.mihosoft.vrl.v3d.Transform
 
 // code here
 
@@ -14,14 +17,22 @@ return new ICadGenerator(){
 	def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 	double rodDiam =bearingType.innerDiameter
 	CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize)
-
+	double rodlen = 500
+	CSG moveDHValues(CSG incoming,DHLink dh ){
+		TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
+		Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
+		return incoming.transformed(move)
+	}
 	@Override
 	public ArrayList<CSG> generateCad(DHParameterKinematics arg0, int arg1) {
 		// TODO Auto-generated method stub
 		ArrayList<CSG> back =[]
-		double height = 180
-		height=arg0.getMaxEngineeringUnits(arg1)-arg0.getMinEngineeringUnits(arg1)
-		CSG rod = new Cylinder(rodDiam/2, height).toCSG()
+		double height =arg0.getMaxEngineeringUnits(arg1)-arg0.getMinEngineeringUnits(arg1)
+		double bracing = rodlen - height
+		CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
+		CSG MyBearing = moveDHValues(vitamin_linearBallBearing_LM10UU,arg0.getDhLink(arg1))
+		MyBearing.setManipulator(arg0.getLinkObjectManipulator(arg1))
+		back.add(MyBearing)
 		back.add(rod)
 		if(arg1==0)
 			rod.setManipulator(arg0.getRootListener())
