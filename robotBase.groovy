@@ -584,9 +584,9 @@ println "Differencing bearing"
 wheelAsmb=wheelAsmb.difference(bearing)
 println "Differencing bearing2"
 wheelAsmb=wheelAsmb.difference(bearing2)
-println "Difference bearing from gear"
+println "Difference wheel bearing from gear"
 def gearMinusBearing = adrive.difference(bearing)
-println "Attaching gear"
+println "Attaching gear to wheel"
 wheelAsmb=wheelAsmb.union(gearMinusBearing)
 
 println "Making gear cutouts"
