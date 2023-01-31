@@ -4,6 +4,7 @@ import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cube
 import eu.mihosoft.vrl.v3d.Cylinder
 import eu.mihosoft.vrl.v3d.Sphere
+import eu.mihosoft.vrl.v3d.Toroid
 import eu.mihosoft.vrl.v3d.Transform
 import eu.mihosoft.vrl.v3d.parametrics.CSGDatabase
 import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
@@ -348,13 +349,14 @@ double tireOD = mm(2.0)
 double width = mm(3.0/16.0)
 double axilToRideHeight = rideHeight-(tireOD/2)
 double sweepCenter = (double)(tireOD+tireID)/4.0
-def tire = CSG.unionAll(
-		Extrude.revolve(new Cylinder(width/2-printerOffset.getMM()/2,1.0,6).toCSG().roty(90),
-		sweepCenter, // rotation center radius, if 0 it is a circle, larger is a donut. Note it can be negative too
-		(double)360,// degrees through wich it should sweep
-		(int)20)//number of sweep increments
-		)
-		.roty(90)
+//def tire = CSG.unionAll(
+//		Extrude.revolve(new Cylinder(width/2-printerOffset.getMM()/2,1.0,6).toCSG().roty(90),
+//		sweepCenter, // rotation center radius, if 0 it is a circle, larger is a donut. Note it can be negative too
+//		(double)360,// degrees through wich it should sweep
+//		(int)20)//number of sweep increments
+//		)
+//		.roty(90)
+def tire=new Toroid(tireID/2, (tireID+ mm(3.0/16.0))/2, 15, 6).toCSG().rotx(90).roty(90)
 def bearing =Vitamins.get("ballBearing","695zz").hull().makeKeepaway(printerOffset.getMM()).toZMin()
 //
 //bearing=bearing.union()
@@ -572,9 +574,21 @@ wheelMountGrid
 ])
 .union(rightCone.intersect(rightCone.getBoundingBox().movex(0.25)).movez(-19).movex(-0.25))  
 println "Making wheel assembly"
-CSG wheelAsmb = CSG.unionAll([adrive,wheelCore])
-println "Differencing axelBolt,tire,bearing,bearing2"
-wheelAsmb=wheelAsmb.difference([axelBolt,tire,bearing,bearing2])
+CSG wheelAsmb = wheelCore
+//wheelAsmb=wheelAsmb.union(adrive)
+println "Differencing tire"
+wheelAsmb=wheelAsmb.difference(tire)
+println "Differencing axelBolt"
+wheelAsmb=wheelAsmb.difference(axelBolt)
+println "Differencing bearing"
+wheelAsmb=wheelAsmb.difference(bearing)
+println "Differencing bearing2"
+wheelAsmb=wheelAsmb.difference(bearing2)
+println "Difference bearing from gear"
+def gearMinusBearing = adrive.difference(bearing)
+println "Attaching gear"
+wheelAsmb=wheelAsmb.union(gearMinusBearing)
+
 println "Making gear cutouts"
 def driveGear = outputGear.difference([shaftBlank,motorBlank])
 println "Making left side bracket"
@@ -635,7 +649,7 @@ tire = driveSection[4]
 motorBlank = driveSection[5]
 bracket.setColor(Color.WHITE)
 bracketm.setColor(Color.IVORY)
-tire.setColor(Color.BLACK)
+tire.setColor(Color.DARKGREY)
 
 def driveGearl = driveGear.mirrorx().movex(wheelbase)
 def wheelAsmbl = wheelAsmb.mirrorx().movex(wheelbase)
