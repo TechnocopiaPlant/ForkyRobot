@@ -18,6 +18,7 @@ return new ICadGenerator(){
 	double rodDiam =bearingType.innerDiameter
 	CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize)
 	double rodlen = 500
+	double rodEmbedlen =10
 	CSG moveDHValues(CSG incoming,DHLink dh ){
 		TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 		Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -28,13 +29,13 @@ return new ICadGenerator(){
 		// TODO Auto-generated method stub
 		ArrayList<CSG> back =[]
 		double height =arg0.getMaxEngineeringUnits(arg1)-arg0.getMinEngineeringUnits(arg1)
-		double bracing = rodlen - height
+		double bracing = rodlen - height - rodEmbedlen 
 		CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
 		CSG upperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
 										.toZMax()
 										.movez(bracing)
 							,arg0.getDhLink(arg1))
-		CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU,arg0.getDhLink(arg1))
+		CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.movez(rodEmbedlen),arg0.getDhLink(arg1))
 		CSG MyBearing = lowerBearing
 						.union(upperBearing)
 		MyBearing.setManipulator(arg0.getLinkObjectManipulator(arg1))
