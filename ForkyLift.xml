@@ -28,7 +28,7 @@
 	<index>0</index>
 	<scale>1.0</scale>
 	<upperLimit>400.0</upperLimit>
-	<lowerLimit>080</lowerLimit>
+	<lowerLimit>0.0</lowerLimit>
 	<upperVelocity>1.0E8</upperVelocity>
 	<lowerVelocity>-1.0E8</lowerVelocity>
 	<staticOffset>0.0</staticOffset>
@@ -84,7 +84,7 @@
 	<index>0</index>
 	<scale>1.0</scale>
 	<upperLimit>400.0</upperLimit>
-	<lowerLimit>80</lowerLimit>
+	<lowerLimit>0.0</lowerLimit>
 	<upperVelocity>1.0E8</upperVelocity>
 	<lowerVelocity>-1.0E8</lowerVelocity>
 	<staticOffset>0.0</staticOffset>
@@ -140,7 +140,7 @@
 	<index>0</index>
 	<scale>1.0</scale>
 	<upperLimit>400.0</upperLimit>
-	<lowerLimit>80</lowerLimit>
+	<lowerLimit>0.0</lowerLimit>
 	<upperVelocity>1.0E8</upperVelocity>
 	<lowerVelocity>-1.0E8</lowerVelocity>
 	<staticOffset>0.0</staticOffset>
