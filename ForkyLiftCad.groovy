@@ -30,7 +30,13 @@ return new ICadGenerator(){
 		double height =arg0.getMaxEngineeringUnits(arg1)-arg0.getMinEngineeringUnits(arg1)
 		double bracing = rodlen - height
 		CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
-		CSG MyBearing = moveDHValues(vitamin_linearBallBearing_LM10UU,arg0.getDhLink(arg1))
+		CSG upperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
+										.toZMax()
+										.movez(bracing)
+							,arg0.getDhLink(arg1))
+		CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU,arg0.getDhLink(arg1))
+		CSG MyBearing = lowerBearing
+						.union(upperBearing)
 		MyBearing.setManipulator(arg0.getLinkObjectManipulator(arg1))
 		back.add(MyBearing)
 		back.add(rod)
