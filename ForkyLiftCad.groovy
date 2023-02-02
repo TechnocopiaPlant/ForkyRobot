@@ -22,8 +22,8 @@ return new ICadGenerator(){
 			double rodlen = 500
 			double rodEmbedlen =10
 			double grid =25;
-			double spacing = 5;
-			double calculatedTotalWidth = spacing*grid;
+			int numGridUnits = 5;
+			double calculatedTotalWidth = numGridUnits*grid;
 			double braceInsetDistance=40
 			double boardThickness=6.3
 			double boxClearence = 8
@@ -38,16 +38,7 @@ return new ICadGenerator(){
 			double bucketBottomDiam=260.0
 			double bucketHeight = 442.8
 			double lipHeight=106.7
-			double cleatWidth = 100
-			double cleatBracing=20
-			
-			CSG cleat = ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth,cleatBracing])
-			CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
-								.toZMax()
-								.movez(bucketHeight)
-			CSG bucket = new Cylinder(bucketBottomDiam/2,bucketTopDiam/2,bucketHeight,(int)30).toCSG()
-								.union(bucketRim)
-								.toXMin()
+
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -104,9 +95,10 @@ return new ICadGenerator(){
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 				}
 				
-				//if(linkIndex!=2) {
+				if(linkIndex!=2) {
 					kin.setDH_R(linkIndex, rodToBoardDistance*2+boardThickness*2+boxClearence)
-				//}
+				}
+
 
 				def boards = [backBoard,frontBoard]
 				for(CSG c:boards) {
@@ -120,10 +112,44 @@ return new ICadGenerator(){
 				}
 				back.addAll(boards)
 				if(linkIndex==2) {
+					
+					double cleatWidth = 100
+					double cleatBracing=20
+					double bucketHeightCentering=100
+					
+					CSG cleat = ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth,cleatBracing])
+								.movey(-cleatWidth/2)
+					double cleatDepth = cleat.getTotalX()
+					double cleatHeight = cleat.getTotalZ()
+					double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
+					kin.setDH_R(linkIndex, cleatPlacement)
+					CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
+										.toZMax()
+										//.movez(bucketHeight)
+					CSG bucket = new Cylinder(bucketBottomDiam/2,bucketTopDiam/2,bucketHeight,(int)30).toCSG()
+										.toZMax()
+										.union(bucketRim)
+										.toXMin()
+										.movez(lipHeight+cleatHeight*2+bucketHeightCentering)
+					CSG bucketCleat=cleat.rotz(180)
+										.movez(cleatHeight+bucketHeightCentering)
+										.difference(bucket)
+					CSG liftCleat = cleat.rotx(180)
+									.toZMin()
+									.movez(cleatHeight+bucketHeightCentering-cleatBracing)
+									.movex(-cleatDepth+cleatBracing)
+					bucketCleat.setColor(Color.BLUE)
+					bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					
+					liftCleat.setColor(Color.PINK)
+					liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					
 					bucket.setColor(Color.WHITE)
 					bucket.setMfg({incoming->return null})
 					bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					back.add(bucket)
+					back.add(bucketCleat)
+					back.add(liftCleat)
 				}
 				for(CSG c:vitamins) {
 
