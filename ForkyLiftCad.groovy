@@ -9,6 +9,7 @@ import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cube
 import eu.mihosoft.vrl.v3d.Cylinder
 import eu.mihosoft.vrl.v3d.Transform
+import javafx.scene.paint.Color
 
 def bearingSize = "LM10UU"
 return new ICadGenerator(){
@@ -21,6 +22,10 @@ return new ICadGenerator(){
 			double spacing = 5;
 			double calculatedTotalWidth = spacing*grid;
 			double braceInsetDistance=40
+			double boardThickness=6.3
+			double rodToBoardDistance =20
+			double sideBraceDistacne =20
+			
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -32,6 +37,13 @@ return new ICadGenerator(){
 				ArrayList<CSG> back =[]
 				double height =arg0.getMaxEngineeringUnits(arg1)-arg0.getMinEngineeringUnits(arg1)
 				double bracing = rodlen - height - rodEmbedlen
+				def vitamins =[]
+				double boardWidth = calculatedTotalWidth*2-(braceInsetDistance*arg1)+sideBraceDistacne*2
+				CSG board = new Cube(boardThickness,boardWidth,rodlen+sideBraceDistacne).toCSG()
+							.toZMin()
+				CSG backBoard = board
+									.toXMax()
+									.movex(-rodToBoardDistance)
 				for(double i=-calculatedTotalWidth;i<calculatedTotalWidth+1;i+=(calculatedTotalWidth*2)) {
 					def braceInsetDistanceArg1 = braceInsetDistance*arg1
 					if(i<0)
@@ -49,10 +61,22 @@ return new ICadGenerator(){
 					MyBearing.setManipulator(arg0.getLinkObjectManipulator(arg1))
 					back.add(MyBearing)
 					back.add(rod)
+					vitamins.addAll([MyBearing,rod])
 					if(arg1==0)
 						rod.setManipulator(arg0.getRootListener())
 					else
 						rod.setManipulator(arg0.getLinkObjectManipulator(arg1-1))
+				}
+				
+				if(arg1==0)
+					backBoard.setManipulator(arg0.getRootListener())
+				else
+					backBoard.setManipulator(arg0.getLinkObjectManipulator(arg1-1))
+				back.add(backBoard)
+				
+				for(CSG c:vitamins) {
+					c.setColor(Color.SILVER)
+					c.setMfg({incoming->return null})
 				}
 				return back;
 			}
