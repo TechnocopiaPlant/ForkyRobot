@@ -1,4 +1,5 @@
 import com.neuronrobotics.bowlerstudio.creature.ICadGenerator
+import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
 import com.neuronrobotics.bowlerstudio.vitamins.Vitamins
 import com.neuronrobotics.sdk.addons.kinematics.DHLink
 import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
@@ -15,6 +16,8 @@ def bearingSize = "LM10UU"
 return new ICadGenerator(){
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			double rodDiam =bearingType.innerDiameter
+			double bearingDiam = bearingType.outerDiameter
+			double bearingPlasticSurround = 2
 			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize)
 			double rodlen = 500
 			double rodEmbedlen =10
@@ -23,10 +26,28 @@ return new ICadGenerator(){
 			double calculatedTotalWidth = spacing*grid;
 			double braceInsetDistance=40
 			double boardThickness=6.3
-			double rodToBoardDistance =15
-			double sideBraceDistacne =20
 			double boxClearence = 8
+			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
+			double sideBraceDistacne =20
+			
 			double frontCutoutDistance = 20
+
+			double bearingBlockX = rodToBoardDistance-boxClearence*2
+			double braceHeight = 100
+			double bucketTopDiam = 299.7
+			double bucketBottomDiam=260.0
+			double bucketHeight = 442.8
+			double lipHeight=106.7
+			double cleatWidth = 100
+			double cleatBracing=20
+			
+			CSG cleat = ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth,cleatBracing])
+			CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
+								.toZMax()
+								.movez(bucketHeight)
+			CSG bucket = new Cylinder(bucketBottomDiam/2,bucketTopDiam/2,bucketHeight,(int)30).toCSG()
+								.union(bucketRim)
+								.toXMin()
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -36,10 +57,18 @@ return new ICadGenerator(){
 			public ArrayList<CSG> generateCad(DHParameterKinematics kin, int linkIndex) {
 				// TODO Auto-generated method stub
 				ArrayList<CSG> back =[]
-				double height =kin.getMaxEngineeringUnits(linkIndex)-kin.getMinEngineeringUnits(linkIndex)
+				
+				double height =rodlen - braceHeight
+				try {
+					kin.setMaxEngineeringUnits(linkIndex,height)
+				}catch(Throwable t) {
+					t.printStackTrace()
+				}
 				double bracing = rodlen - height - rodEmbedlen
 				def vitamins =[]
 				double boardWidth = calculatedTotalWidth*2-(braceInsetDistance*linkIndex)+sideBraceDistacne*2
+				double bearingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*linkIndex)+bearingDiam+bearingPlasticSurround*2
+				
 				CSG board = new Cube(boardThickness,boardWidth,rodlen+sideBraceDistacne).toCSG()
 							.toZMin()
 				CSG cutout = new Cube(boardThickness,boardWidth-frontCutoutDistance*2,rodlen+sideBraceDistacne-frontCutoutDistance*2).toCSG()
@@ -74,20 +103,30 @@ return new ICadGenerator(){
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 				}
-				if(linkIndex!=2) {
+				
+				//if(linkIndex!=2) {
 					kin.setDH_R(linkIndex, rodToBoardDistance*2+boardThickness*2+boxClearence)
+				//}
+
+				def boards = [backBoard,frontBoard]
+				for(CSG c:boards) {
+					if(linkIndex==0) {
+						c.setManipulator(kin.getRootListener())
+					}else {
+						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					}
+					c.setColor(Color.web("#EDCAA1"))
+					c.addExportFormat("svg")
 				}
-				
-				if(linkIndex==0) {
-					backBoard.setManipulator(kin.getRootListener())
-					frontBoard.setManipulator(kin.getRootListener())
-				}else {
-					backBoard.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-					frontBoard.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+				back.addAll(boards)
+				if(linkIndex==2) {
+					bucket.setColor(Color.WHITE)
+					bucket.setMfg({incoming->return null})
+					bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					back.add(bucket)
 				}
-				back.addAll([backBoard,frontBoard])
-				
 				for(CSG c:vitamins) {
+
 					c.setColor(Color.SILVER)
 					c.setMfg({incoming->return null})
 				}

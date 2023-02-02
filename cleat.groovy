@@ -17,4 +17,4 @@ CSG bracket=new Cube(depth+inset,length,depth+inset).toCSG()
 CSG cleatWedge =bracket.difference( new Wedge(depth,length,depth).toCSG())
 
 					
-return [cleatWedge]
+return cleatWedge
