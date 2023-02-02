@@ -27,7 +27,7 @@
 	<type>pid-prismatic</type>
 	<index>0</index>
 	<scale>1.0</scale>
-	<upperLimit>400.0</upperLimit>
+	<upperLimit>390.0</upperLimit>
 	<lowerLimit>0.0</lowerLimit>
 	<upperVelocity>1.0E8</upperVelocity>
 	<lowerVelocity>-1.0E8</lowerVelocity>
@@ -72,7 +72,7 @@
 	<DHParameters>
 		<Delta>0.0</Delta>
 		<Theta>0.0</Theta>
-		<Radius>59.6</Radius>
+		<Radius>65.6</Radius>
 		<Alpha>0.0</Alpha>
 	</DHParameters>
 
@@ -83,7 +83,7 @@
 	<type>pid-prismatic</type>
 	<index>0</index>
 	<scale>1.0</scale>
-	<upperLimit>400.0</upperLimit>
+	<upperLimit>390.0</upperLimit>
 	<lowerLimit>0.0</lowerLimit>
 	<upperVelocity>1.0E8</upperVelocity>
 	<lowerVelocity>-1.0E8</lowerVelocity>
@@ -128,7 +128,7 @@
 	<DHParameters>
 		<Delta>0.0</Delta>
 		<Theta>0.0</Theta>
-		<Radius>59.6</Radius>
+		<Radius>65.6</Radius>
 		<Alpha>0.0</Alpha>
 	</DHParameters>
 
@@ -139,7 +139,7 @@
 	<type>pid-prismatic</type>
 	<index>0</index>
 	<scale>1.0</scale>
-	<upperLimit>400.0</upperLimit>
+	<upperLimit>390.0</upperLimit>
 	<lowerLimit>0.0</lowerLimit>
 	<upperVelocity>1.0E8</upperVelocity>
 	<lowerVelocity>-1.0E8</lowerVelocity>
@@ -184,7 +184,7 @@
 	<DHParameters>
 		<Delta>0.0</Delta>
 		<Theta>0.0</Theta>
-		<Radius>87.6</Radius>
+		<Radius>93.6</Radius>
 		<Alpha>0.0</Alpha>
 	</DHParameters>
 
