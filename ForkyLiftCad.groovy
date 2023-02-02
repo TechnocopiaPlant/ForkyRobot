@@ -18,9 +18,9 @@ return new ICadGenerator(){
 			double rodDiam =bearingType.innerDiameter
 			double bearingDiam = bearingType.outerDiameter
 			double bearingPlasticSurround = 5
-			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize)
+			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize).hull()
 			double rodlen = 500
-			double rodEmbedlen =20
+			double rodEmbedlen =10
 			double grid =25;
 			int numGridUnits = 5;
 			double calculatedTotalWidth = numGridUnits*grid;
@@ -38,7 +38,7 @@ return new ICadGenerator(){
 			double bucketBottomDiam=260.0
 			double bucketHeight = 442.8
 			double lipHeight=106.7
-
+			double bracingBetweenStages = rodToBoardDistance*2+boardThickness*2+boxClearence
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -60,10 +60,21 @@ return new ICadGenerator(){
 				def vitamins =[]
 				double boardWidth = calculatedTotalWidth*2-(braceInsetDistance*linkIndex)+sideBraceDistacne*2
 				double bearingBlockWidth = (calculatedTotalWidth*2)-(braceInsetDistance*linkIndex*2)+bearingDiam+(bearingPlasticSurround*2)
-
-				CSG bearingBlock = new Cube(rodToBoardDistance*2-boxClearence*2,bearingBlockWidth,bracing- rodEmbedlen).toCSG()
+				double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
+				double connectionSection= bracingBetweenStages-boardThickness*2-boxClearence*2
+				CSG bearingBlock = new Cube(bearingBlcokBearingSection*2,
+					bearingBlockWidth,bracing- rodEmbedlen).toCSG()
 						.toZMin()
 						.movez(rodEmbedlen)
+						.toXMin()
+						.movex(-bearingBlcokBearingSection)
+				CSG connectingBlock = new Cube(bearingBlcokBearingSection+connectionSection,
+							boardWidth-frontCutoutDistance*2-boxClearence,bracing- rodEmbedlen).toCSG()
+								.toZMin()
+								.movez(rodEmbedlen)
+								.toXMin()
+								.movex(-bearingBlcokBearingSection)
+				bearingBlock=bearingBlock.union(connectingBlock)
 				CSG board = new Cube(boardThickness,boardWidth,rodlen).toCSG()
 						.toZMin()
 				CSG cutout = new Cube(boardThickness,boardWidth-frontCutoutDistance*2,rodlen-frontCutoutDistance*2).toCSG()
@@ -81,11 +92,12 @@ return new ICadGenerator(){
 						braceInsetDistanceArg1*=-1
 					CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
 							.movey(i-(braceInsetDistanceArg1))
+					CSG clearence = new Cylinder(rodDiam/2+1, bracing-rodEmbedlen).toCSG()
 					CSG upperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
 							.toZMax()
 							.movez(bracing)
 							,kin.getDhLink(linkIndex))
-					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.movez(rodEmbedlen),kin.getDhLink(linkIndex))
+					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.union(clearence).movez(rodEmbedlen),kin.getDhLink(linkIndex))
 					CSG MyBearing = lowerBearing
 							.union(upperBearing)
 							.movey(i-(braceInsetDistanceArg1))
@@ -98,11 +110,11 @@ return new ICadGenerator(){
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 				}
-				bearingBlock= moveDHValues(bearingBlock.difference(vitamins),kin.getDhLink(linkIndex))
-						.difference(vitamins)
+				bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
+									.difference(vitamins)
 
 				if(linkIndex!=2) {
-					kin.setDH_R(linkIndex, rodToBoardDistance*2+boardThickness*2+boxClearence)
+					kin.setDH_R(linkIndex, bracingBetweenStages)
 				}
 
 
@@ -119,10 +131,12 @@ return new ICadGenerator(){
 				back.addAll(boards)
 				if(linkIndex==0) {
 					bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					bearingBlock.setColor(Color.CRIMSON)
 					back.add(bearingBlock)
 				}
 				if(linkIndex==1) {
 					bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					bearingBlock.setColor(Color.MEDIUMORCHID)
 					back.add(bearingBlock)
 				}
 				if(linkIndex==2) {
