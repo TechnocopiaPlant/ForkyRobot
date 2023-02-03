@@ -11,7 +11,7 @@ import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
 import javafx.scene.paint.Color
 
-println "Loading 200x robot"
+println "Loading Forky Robot"
 def mm(def inches){
 	return inches*25.4
 }
