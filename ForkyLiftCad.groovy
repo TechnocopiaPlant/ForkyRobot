@@ -141,16 +141,21 @@ return new ICadGenerator(){
 				}
 				if(linkIndex==2) {
 
-					double cleatWidth = bearingBlockWidth
+					double cleatWidth = boardWidth-frontCutoutDistance*2-boxClearence
 					double cleatBracing=20
-					double bucketHeightCentering=100
-
+					double bucketHeightCentering=60
+					
 					CSG cleat = ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth, cleatBracing])
 					.movey(-cleatWidth/2)
 					double cleatDepth = cleat.getTotalX()
 					double cleatHeight = cleat.getTotalZ()
 					double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
 					kin.setDH_R(linkIndex, cleatPlacement)
+					CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-boxClearence*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
+								.toZMin()
+								.movez(-bucketHeightCentering)
+								
+					
 					CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
 							.toZMax()
 					//.movez(bucketHeight)
@@ -167,6 +172,8 @@ return new ICadGenerator(){
 							.movez(cleatHeight+bucketHeightCentering-cleatBracing)
 							.movex(-cleatDepth+cleatBracing)
 							.union(bearingBlock)
+							.union(heel)
+							.difference(bucket)
 					bucketCleat.setColor(Color.BLUE)
 					bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 
