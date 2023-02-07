@@ -19,7 +19,7 @@ return new ICadGenerator(){
 			double bearingDiam = bearingType.outerDiameter
 			double bearingPlasticSurround = 5
 			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize).hull()
-			double rodlen = 500
+			double rodlen = 750
 			double rodEmbedlen =10
 			double grid =25;
 			int numGridUnits = 5;
@@ -28,7 +28,7 @@ return new ICadGenerator(){
 			double boardThickness=6.3
 			double boxClearence = 8
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
-			double sideBraceDistacne =20
+			double sideBraceDistacne =braceInsetDistance/2
 
 			double frontCutoutDistance = rodEmbedlen
 
@@ -39,6 +39,7 @@ return new ICadGenerator(){
 			double bucketHeight = 442.8
 			double lipHeight=106.7
 			double bracingBetweenStages = rodToBoardDistance*2+boardThickness*2+boxClearence
+
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -49,7 +50,7 @@ return new ICadGenerator(){
 				// TODO Auto-generated method stub
 				ArrayList<CSG> back =[]
 
-				
+
 				double bracing = braceHeight
 				double height =rodlen - braceHeight -rodEmbedlen
 				try {
@@ -58,28 +59,31 @@ return new ICadGenerator(){
 					t.printStackTrace()
 				}
 				def vitamins =[]
-				double boardWidth = calculatedTotalWidth*2-(braceInsetDistance*linkIndex)+sideBraceDistacne*2
+				double stageInset = (braceInsetDistance*linkIndex)
+				double boardWidth = calculatedTotalWidth*2-stageInset*2+rodEmbedlen*2
 				double bearingBlockWidth = (calculatedTotalWidth*2)-(braceInsetDistance*linkIndex*2)+bearingDiam+(bearingPlasticSurround*2)
 				double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
 				double connectionSection= bracingBetweenStages-boardThickness*2-boxClearence*2
+				println "Board distance  "+linkIndex+" is "+boardWidth
+				double connectingBlockWidth = boardWidth-rodEmbedlen*2-boxClearence
 				CSG bearingBlock = new Cube(bearingBlcokBearingSection*2,
-					bearingBlockWidth,bracing- rodEmbedlen).toCSG()
+						bearingBlockWidth,bracing- rodEmbedlen).toCSG()
 						.toZMin()
 						.movez(rodEmbedlen)
 						.toXMin()
 						.movex(-bearingBlcokBearingSection)
 				CSG connectingBlock = new Cube(bearingBlcokBearingSection+connectionSection,
-							boardWidth-frontCutoutDistance*2-boxClearence,bracing- rodEmbedlen).toCSG()
-								.toZMin()
-								.movez(rodEmbedlen)
-								.toXMin()
-								.movex(-bearingBlcokBearingSection)
+						connectingBlockWidth,bracing- rodEmbedlen).toCSG()
+						.toZMin()
+						.movez(rodEmbedlen)
+						.toXMin()
+						.movex(-bearingBlcokBearingSection)
 				bearingBlock=bearingBlock.union(connectingBlock)
-				CSG board = new Cube(boardThickness,boardWidth,rodlen).toCSG()
+				CSG board = new Cube(boardThickness,boardWidth+sideBraceDistacne*2,rodlen).toCSG()
 						.toZMin()
-				CSG cutout = new Cube(boardThickness,boardWidth-frontCutoutDistance*2,rodlen-frontCutoutDistance*2).toCSG()
+				CSG cutout = new Cube(boardThickness,boardWidth-rodEmbedlen*2,rodlen-rodEmbedlen*2).toCSG()
 						.toZMin()
-						.movez(frontCutoutDistance)
+						.movez(rodEmbedlen)
 				CSG backBoard = board
 						.toXMax()
 						.movex(-rodToBoardDistance)
@@ -87,11 +91,13 @@ return new ICadGenerator(){
 						.toXMin()
 						.movex(rodToBoardDistance)
 				for(double i=-calculatedTotalWidth;i<calculatedTotalWidth+1;i+=(calculatedTotalWidth*2)) {
-					def braceInsetDistanceArg1 = braceInsetDistance*linkIndex
+					def braceInsetDistanceArg1 = stageInset
 					if(i<0)
 						braceInsetDistanceArg1*=-1
+					double rodSeperation = i-(braceInsetDistanceArg1)
+					println "Seperation dist for "+linkIndex+" is "+(rodSeperation*2)
 					CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
-							.movey(i-(braceInsetDistanceArg1))
+							.movey(rodSeperation)
 					CSG clearence = new Cylinder(rodDiam/2+1, bracing-rodEmbedlen).toCSG()
 					CSG upperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
 							.toZMax()
@@ -100,7 +106,7 @@ return new ICadGenerator(){
 					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.union(clearence).movez(rodEmbedlen),kin.getDhLink(linkIndex))
 					CSG MyBearing = lowerBearing
 							.union(upperBearing)
-							.movey(i-(braceInsetDistanceArg1))
+							.movey(rodSeperation)
 					MyBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					back.add(MyBearing)
 					back.add(rod)
@@ -111,7 +117,7 @@ return new ICadGenerator(){
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 				}
 				bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
-									.difference(vitamins)
+						.difference(vitamins)
 
 				if(linkIndex!=2) {
 					kin.setDH_R(linkIndex, bracingBetweenStages)
@@ -130,62 +136,14 @@ return new ICadGenerator(){
 				}
 				back.addAll(boards)
 				if(linkIndex==0) {
-					bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-					bearingBlock.setColor(Color.CRIMSON)
-					back.add(bearingBlock)
+					makeLink0( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
 				if(linkIndex==1) {
-					bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-					bearingBlock.setColor(Color.MEDIUMORCHID)
-					back.add(bearingBlock)
+					makeLink1( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
 				if(linkIndex==2) {
 
-					double cleatWidth = boardWidth-frontCutoutDistance*2-boxClearence
-					double cleatBracing=20
-					double bucketHeightCentering=60
-					
-					CSG cleat = ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth, cleatBracing])
-					.movey(-cleatWidth/2)
-					double cleatDepth = cleat.getTotalX()
-					double cleatHeight = cleat.getTotalZ()
-					double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
-					kin.setDH_R(linkIndex, cleatPlacement)
-					CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-boxClearence*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
-								.toZMin()
-								.movez(-bucketHeightCentering)
-								
-					
-					CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
-							.toZMax()
-					//.movez(bucketHeight)
-					CSG bucket = new Cylinder(bucketBottomDiam/2,bucketTopDiam/2,bucketHeight,(int)30).toCSG()
-							.toZMax()
-							.union(bucketRim)
-							.toXMin()
-							.movez(lipHeight+cleatHeight*2+bucketHeightCentering)
-					CSG bucketCleat=cleat.rotz(180)
-							.movez(cleatHeight+bucketHeightCentering)
-							.difference(bucket)
-					CSG liftCleat = cleat.rotx(180)
-							.toZMin()
-							.movez(cleatHeight+bucketHeightCentering-cleatBracing)
-							.movex(-cleatDepth+cleatBracing)
-							.union(bearingBlock)
-							.union(heel)
-							.difference(bucket)
-					bucketCleat.setColor(Color.BLUE)
-					bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-
-					liftCleat.setColor(Color.PINK)
-					liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-
-					bucket.setColor(Color.WHITE)
-					bucket.setMfg({incoming->return null})
-					bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-					back.add(bucket)
-					back.add(bucketCleat)
-					back.add(liftCleat)
+					makeLink2( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
 				for(CSG c:vitamins) {
 
@@ -194,7 +152,64 @@ return new ICadGenerator(){
 				}
 				return back;
 			}
+			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
+				bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+				bearingBlock.setColor(Color.CRIMSON)
+				back.add(bearingBlock)
+			}
+			private void makeLink1(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
+				bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+				bearingBlock.setColor(Color.MEDIUMORCHID)
+				back.add(bearingBlock)
+			}
+			
+			private void makeLink2(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
+				double cleatWidth = connectingBlockWidth
+				double cleatBracing=20
+				double bucketHeightCentering=60
 
+				CSG cleat = ((CSG)ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth, cleatBracing]))
+						.movey(-cleatWidth/2)
+				double cleatDepth = cleat.getTotalX()
+				double cleatHeight = cleat.getTotalZ()
+				double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
+				kin.setDH_R(linkIndex, cleatPlacement)
+				CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-boxClearence*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
+						.toZMin()
+						.movez(-bucketHeightCentering)
+
+
+				CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
+						.toZMax()
+				//.movez(bucketHeight)
+				CSG bucket = new Cylinder(bucketBottomDiam/2,bucketTopDiam/2,bucketHeight,(int)30).toCSG()
+						.toZMax()
+						.union(bucketRim)
+						.toXMin()
+						.movez(lipHeight+cleatHeight*2+bucketHeightCentering)
+				CSG bucketCleat=cleat.rotz(180)
+						.movez(cleatHeight+bucketHeightCentering)
+						.difference(bucket)
+				CSG liftCleat = cleat.rotx(180)
+						.toZMin()
+						.movez(cleatHeight+bucketHeightCentering-cleatBracing)
+						.movex(-cleatDepth+cleatBracing)
+						.union(bearingBlock)
+						.union(heel)
+						.difference(bucket)
+				bucketCleat.setColor(Color.BLUE)
+				bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+
+				liftCleat.setColor(Color.PINK)
+				liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+
+				bucket.setColor(Color.WHITE)
+				bucket.setMfg({incoming->return null})
+				bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+				back.add(bucket)
+				back.add(bucketCleat)
+				back.add(liftCleat)
+			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
 				// TODO Auto-generated method stub
