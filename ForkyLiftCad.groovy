@@ -122,8 +122,8 @@ return new ICadGenerator(){
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 					
-					upperBearing.addAssemblyStep( 5+stepOffset, new Transform().movez(bearingHeight+5))
-					lowerBearing.addAssemblyStep( 6+stepOffset, new Transform().movez(-(bracing+5)))
+					upperBearing.addAssemblyStep( 2+stepOffset, new Transform().movez(bearingHeight+5))
+					lowerBearing.addAssemblyStep( 2+stepOffset, new Transform().movez(-(bracing+5)))
 					rod.addAssemblyStep( 7+stepOffset, new Transform().movez(-rodlen-braceInsetDistance-bracing))
 				}
 				CSG topBottomBlock = new Cube(rodToBoardDistance*2,calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2,sideBraceDistacne+rodEmbedlen).toCSG()
@@ -157,7 +157,7 @@ return new ICadGenerator(){
 				}
 				def boards = [backBoard, frontBoard]
 				frontBoard.addAssemblyStep( 4, new Transform().movex(braceHeight))
-				backBoard.addAssemblyStep( 2, new Transform().movey(boardWidth*2))
+				backBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
 				for(CSG c:boards) {
 					if(linkIndex==0) {
 						c.setManipulator(kin.getRootListener())
@@ -189,13 +189,13 @@ return new ICadGenerator(){
 				bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bearingBlock.setColor(Color.CRIMSON)
 				back.add(bearingBlock)
-				bearingBlock.addAssemblyStep( 1, new Transform().movex(bearingBlcokBearingSection))
+				bearingBlock.addAssemblyStep( 1, new Transform().movex(-bearingBlcokBearingSection))
 			}
 			private void makeLink1(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
 				bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bearingBlock.setColor(Color.MEDIUMORCHID)
 				back.add(bearingBlock)
-				bearingBlock.addAssemblyStep( 1, new Transform().movex(bearingBlcokBearingSection))
+				bearingBlock.addAssemblyStep( 1, new Transform().movex(-bearingBlcokBearingSection))
 			}
 			
 			private void makeLink2(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
