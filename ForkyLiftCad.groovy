@@ -94,6 +94,7 @@ return new ICadGenerator(){
 						.toXMin()
 						.movex(rodToBoardDistance)
 				int stepOffset = 0;
+				def clearenceParts=[]
 				for(double i=-calculatedTotalWidth;i<calculatedTotalWidth+1;i+=(calculatedTotalWidth*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					if(i<0)
@@ -108,9 +109,10 @@ return new ICadGenerator(){
 							.movez(bracing)
 							,kin.getDhLink(linkIndex))
 							.movey(rodSeperation)
-					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.union(clearence).movez(rodEmbedlen),kin.getDhLink(linkIndex))
-										.movey(rodSeperation)
-	
+					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.movez(rodEmbedlen),kin.getDhLink(linkIndex))
+										.movey(rodSeperation).hull()
+					clearenceParts.add(moveDHValues(clearence.movez(rodEmbedlen),kin.getDhLink(linkIndex))
+										.movey(rodSeperation))
 							
 					upperBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					lowerBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
@@ -135,11 +137,12 @@ return new ICadGenerator(){
 								.movez(-rodEmbedlen/2)
 								.difference(vitamins)
 				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
-				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*(6+stepIndex)))
-				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight-5))
+				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*(3+stepIndex*2)))
+				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight*(3*stepIndex +1)-5))
 				
 				bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
 						.difference(vitamins)
+						.difference(clearenceParts)
 
 				if(linkIndex!=2) {
 					kin.setDH_R(linkIndex, bracingBetweenStages)
