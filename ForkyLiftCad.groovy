@@ -135,7 +135,7 @@ return new ICadGenerator(){
 								.movez(-rodEmbedlen/2)
 								.difference(vitamins)
 				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
-				
+				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*3))
 				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight-5))
 				
 				bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
