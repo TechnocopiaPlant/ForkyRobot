@@ -17,9 +17,10 @@ return new ICadGenerator(){
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			double rodDiam =bearingType.innerDiameter
 			double bearingDiam = bearingType.outerDiameter
+			double bearingHeight = bearingType.length
 			double bearingPlasticSurround = 5
 			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize).hull()
-			double rodlen = 750
+			double rodlen = 500
 			double rodEmbedlen =10
 			double grid =25;
 			int numGridUnits = 5;
@@ -47,9 +48,10 @@ return new ICadGenerator(){
 			}
 			@Override
 			public ArrayList<CSG> generateCad(DHParameterKinematics kin, int linkIndex) {
+				println bearingType
 				// TODO Auto-generated method stub
 				ArrayList<CSG> back =[]
-
+				int stepIndex = kin.getNumberOfLinks()-linkIndex-1
 
 				double bracing = braceHeight
 				double height =rodlen - braceHeight -rodEmbedlen
@@ -79,8 +81,9 @@ return new ICadGenerator(){
 						.toXMin()
 						.movex(-bearingBlcokBearingSection)
 				bearingBlock=bearingBlock.union(connectingBlock)
-				CSG board = new Cube(boardThickness,boardWidth+sideBraceDistacne*2,rodlen).toCSG()
+				CSG board = new Cube(boardThickness,boardWidth+sideBraceDistacne*2,rodlen+sideBraceDistacne*2).toCSG()
 						.toZMin()
+						.movez(-sideBraceDistacne)
 				CSG cutout = new Cube(boardThickness,boardWidth-rodEmbedlen*2,rodlen-rodEmbedlen*2).toCSG()
 						.toZMin()
 						.movez(rodEmbedlen)
@@ -90,6 +93,7 @@ return new ICadGenerator(){
 				CSG frontBoard = board.difference(cutout)
 						.toXMin()
 						.movex(rodToBoardDistance)
+				int stepOffset = 0;
 				for(double i=-calculatedTotalWidth;i<calculatedTotalWidth+1;i+=(calculatedTotalWidth*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					if(i<0)
@@ -103,19 +107,37 @@ return new ICadGenerator(){
 							.toZMax()
 							.movez(bracing)
 							,kin.getDhLink(linkIndex))
-					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.union(clearence).movez(rodEmbedlen),kin.getDhLink(linkIndex))
-					CSG MyBearing = lowerBearing
-							.union(upperBearing)
 							.movey(rodSeperation)
-					MyBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-					back.add(MyBearing)
-					back.add(rod)
-					vitamins.addAll([MyBearing, rod])
+					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.union(clearence).movez(rodEmbedlen),kin.getDhLink(linkIndex))
+										.movey(rodSeperation)
+	
+							
+					upperBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					lowerBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+					def vits=[upperBearing, rod,lowerBearing]
+					back.addAll(vits)
+					vitamins.addAll(vits)
 					if(linkIndex==0)
 						rod.setManipulator(kin.getRootListener())
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					
+					upperBearing.addAssemblyStep( 5+stepOffset, new Transform().movez(bearingHeight+5))
+					lowerBearing.addAssemblyStep( 6+stepOffset, new Transform().movez(-(bracing+5)))
+					rod.addAssemblyStep( 7+stepOffset, new Transform().movez(-rodlen-braceInsetDistance-bracing))
 				}
+				CSG topBottomBlock = new Cube(rodToBoardDistance*2,calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2,sideBraceDistacne+rodEmbedlen).toCSG()
+				
+				CSG topBlock=topBottomBlock
+								.movez(rodlen+rodEmbedlen/2)
+								.difference(vitamins)
+				CSG bottomBlock = topBottomBlock
+								.movez(-rodEmbedlen/2)
+								.difference(vitamins)
+				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
+				
+				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight-5))
+				
 				bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
 						.difference(vitamins)
 
@@ -123,8 +145,19 @@ return new ICadGenerator(){
 					kin.setDH_R(linkIndex, bracingBetweenStages)
 				}
 
-
+				def braceBlocks = [topBlock,bottomBlock]
+				for(CSG c:braceBlocks) {
+					if(linkIndex==0) {
+						c.setManipulator(kin.getRootListener())
+					}else {
+						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					}
+					c.setColor(Color.color(Math.random(), Math.random(), Math.random()))
+					back.add(c)
+				}
 				def boards = [backBoard, frontBoard]
+				frontBoard.addAssemblyStep( 4, new Transform().movex(braceHeight))
+				backBoard.addAssemblyStep( 2, new Transform().movey(boardWidth*2))
 				for(CSG c:boards) {
 					if(linkIndex==0) {
 						c.setManipulator(kin.getRootListener())
@@ -133,8 +166,8 @@ return new ICadGenerator(){
 					}
 					c.setColor(Color.web("#EDCAA1"))
 					c.addExportFormat("svg")
+					back.add(c)
 				}
-				back.addAll(boards)
 				if(linkIndex==0) {
 					makeLink0( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
@@ -156,11 +189,13 @@ return new ICadGenerator(){
 				bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bearingBlock.setColor(Color.CRIMSON)
 				back.add(bearingBlock)
+				bearingBlock.addAssemblyStep( 1, new Transform().movex(bearingBlcokBearingSection))
 			}
 			private void makeLink1(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
 				bearingBlock.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bearingBlock.setColor(Color.MEDIUMORCHID)
 				back.add(bearingBlock)
+				bearingBlock.addAssemblyStep( 1, new Transform().movex(bearingBlcokBearingSection))
 			}
 			
 			private void makeLink2(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
@@ -209,6 +244,11 @@ return new ICadGenerator(){
 				back.add(bucket)
 				back.add(bucketCleat)
 				back.add(liftCleat)
+				bucket.addAssemblyStep( 10, new Transform().movez(bucketHeightCentering*2))
+				bucketCleat.addAssemblyStep( 10, new Transform().movez(bucketHeightCentering*2))
+				bucket.addAssemblyStep(9, new Transform().movex(bucketHeightCentering*2))
+				
+				liftCleat.addAssemblyStep( 1, new Transform().movex(cleatDepth+cleatBracing))
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
