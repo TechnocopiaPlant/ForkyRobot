@@ -161,6 +161,8 @@ return new ICadGenerator(){
 				def boards = [backBoard, frontBoard]
 				frontBoard.addAssemblyStep( 4, new Transform().movex(braceHeight))
 				backBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
+				frontBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
+				
 				for(CSG c:boards) {
 					if(linkIndex==0) {
 						c.setManipulator(kin.getRootListener())
