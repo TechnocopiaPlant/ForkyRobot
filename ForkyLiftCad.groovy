@@ -23,9 +23,9 @@ return new ICadGenerator(){
 			double rodlen = 500
 			double rodEmbedlen =10
 			double grid =25;
-			int numGridUnits = 5;
+			int numGridUnits = 6;
 			double calculatedTotalWidth = numGridUnits*grid;
-			double braceInsetDistance=40
+			double braceInsetDistance=60
 			double boardThickness=6.3
 			double boxClearence = 8
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
@@ -180,17 +180,19 @@ return new ICadGenerator(){
 					rod.addAssemblyStep( 7+stepOffset, new Transform().movez(-rodlen-braceInsetDistance-bracing))
 				}
 
-
-				CSG topBottomBlock = new Cube(rodToBoardDistance*2+depthOcCSection,calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2,sideBraceDistacne+rodEmbedlen).toCSG()
+				double shaftHolderY=calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2
+				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
+				CSG topBottomBlock = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
 				if(linkIndex!=2) {
 					CSG topBottomBlockCutout = new Cube(
-							rodToBoardDistance*2+depthOcCSection-braceInsetDistance+boardThickness,
-							calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2 - braceInsetDistance*2+boxClearence,
+							depthOcCSection + boardThickness+boxClearence,
+							shaftHolderY - braceInsetDistance*2+boxClearence,
 							sideBraceDistacne+rodEmbedlen).toCSG()
 							.toXMax()
 							.movex(rodToBoardDistance)
+							
 					topBottomBlock=topBottomBlock.difference(topBottomBlockCutout)
 
 				}
@@ -259,16 +261,16 @@ return new ICadGenerator(){
 					c.setColor(Color.SILVER)
 					c.setMfg({incoming->return null})
 				}
-				for(CSG c:clearenceParts) {
-					if(linkIndex==0) {
-						c.setManipulator(kin.getRootListener())
-					}else {
-						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-					}
-					c.setColor(Color.WHITE)
-					c.setMfg({incoming->return null})
-					back.add(c)
-				}
+//				for(CSG c:clearenceParts) {
+//					if(linkIndex==0) {
+//						c.setManipulator(kin.getRootListener())
+//					}else {
+//						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+//					}
+//					c.setColor(Color.WHITE)
+//					c.setMfg({incoming->return null})
+//					back.add(c)
+//				}
 				return back;
 			}
 			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
