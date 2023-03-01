@@ -155,6 +155,8 @@ return new ICadGenerator(){
 														.movey(rodSeperation).hull()
 					clearenceParts.add(moveDHValues(clearence.movez(rodEmbedlen),kin.getDhLink(linkIndex))
 										.movey(lastrodSeperation))
+					clearenceParts.add(moveDHValues(clearence.movez(rodEmbedlen),kin.getDhLink(linkIndex))
+						.movey(rodSeperation))
 					clearenceParts.add(lastupperBearing)
 					clearenceParts.add(lastlowerBearing)
 					
