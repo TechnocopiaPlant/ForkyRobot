@@ -147,6 +147,7 @@ return new ICadGenerator(){
 							.movey(rodSeperation)
 					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.movez(rodEmbedlen),kin.getDhLink(linkIndex))
 							.movey(rodSeperation).hull()
+					
 					if (linkIndex>0) {
 						def dh = kin.getDhLink(linkIndex-1)
 						CSG lastupperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
@@ -161,6 +162,7 @@ return new ICadGenerator(){
 						clearenceParts.add(lastupperBearing)
 						clearenceParts.add(lastlowerBearing)
 					}
+					clearenceParts.add(rod)
 					upperBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					lowerBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					def vits=[
@@ -185,6 +187,7 @@ return new ICadGenerator(){
 				CSG topBottomBlock = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
+						.toZMin()
 				if(linkIndex!=2) {
 					CSG topBottomBlockCutout = new Cube(
 							depthOcCSection + boardThickness+boxClearence,
@@ -192,17 +195,17 @@ return new ICadGenerator(){
 							sideBraceDistacne+rodEmbedlen).toCSG()
 							.toXMax()
 							.movex(rodToBoardDistance)
-							
+							.toZMin()
 					topBottomBlock=topBottomBlock.difference(topBottomBlockCutout)
 
 				}
 
 				CSG topBlock=topBottomBlock
-						.movez(rodlen+rodEmbedlen/2)
-						.difference(vitamins)
+						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2)
+						.difference(clearenceParts)
 				CSG bottomBlock = topBottomBlock
-						.movez(-rodEmbedlen/2)
-						.difference(vitamins)
+						.movez(-sideBraceDistacne)
+						.difference(clearenceParts)
 				if(linkIndex!=0) {
 					bearingInCShape=bearingInCShape.difference(clearenceParts)
 					bottomBlock=bottomBlock.union(bearingInCShape)
