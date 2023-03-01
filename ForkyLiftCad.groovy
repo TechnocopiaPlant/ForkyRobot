@@ -210,7 +210,7 @@ return new ICadGenerator(){
 				}else {
 					
 				}
-
+				
 
 				def braceBlocks = [topBlock,bottomBlock]
 				for(CSG c:braceBlocks) {
@@ -251,9 +251,18 @@ return new ICadGenerator(){
 					makeLink2( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
 				for(CSG c:vitamins) {
-
 					c.setColor(Color.SILVER)
 					c.setMfg({incoming->return null})
+				}
+				for(CSG c:clearenceParts) {
+					if(linkIndex==0) {
+						c.setManipulator(kin.getRootListener())
+					}else {
+						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					}
+					c.setColor(Color.WHITE)
+					c.setMfg({incoming->return null})
+					back.add(c)
 				}
 				return back;
 			}
