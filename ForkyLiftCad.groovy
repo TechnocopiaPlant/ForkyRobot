@@ -9,12 +9,20 @@ import com.neuronrobotics.sdk.addons.kinematics.math.TransformNR
 import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cube
 import eu.mihosoft.vrl.v3d.Cylinder
+import eu.mihosoft.vrl.v3d.Toroid
 import eu.mihosoft.vrl.v3d.Transform
 import javafx.scene.paint.Color
 
 def bearingSize = "LM10UU"
+def pulleyBearingSize = "695zz"
+CSG pulleyBearingCad = Vitamins.get("ballBearing", pulleyBearingSize).hull()
+CSG nut = Vitamins.get("lockNut", "M5")
+CSG boltPulley = Vitamins.get("capScrew", "M5x25")
+
 return new ICadGenerator(){
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
+			def pulleyBearingConfig = Vitamins.getConfiguration("ballBearing", pulleyBearingSize)
+			double bearingThickness = pulleyBearingConfig.width
 			double rodDiam =bearingType.innerDiameter
 			double bearingDiam = bearingType.outerDiameter
 			double bearingHeight = bearingType.length
@@ -38,16 +46,75 @@ return new ICadGenerator(){
 			double bucketHeight = 442.8
 			double lipHeight=106.7
 			double bracingBetweenStages = 0;//rodToBoardDistance*2+boardThickness*2+boxClearence
+			double pulleyRadius = 10
+			double cordDiameter = 6
+			double pulleyBearingSeperation = 2
+			double pulleySupportThickness = 4.5
+			double pulleyClearenceDistance=1
+			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
+			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
 				return incoming.transformed(move)
 			}
-			public ArrayList<CSG> bearingBlock(){
-				ArrayList<CSG> back=[]
-
-
-
+			public HashMap<String,ArrayList<CSG>> bearingBlock(){
+				HashMap<String,ArrayList<CSG>> back= []
+				def toAdd= []
+				def toCut=[]
+				def vitamins=[]
+				back.put("add",toAdd)
+				back.put("cut",toCut)
+				back.put("vitamins",vitamins)
+				
+				CSG leftBearing = pulleyBearingCad.rotx(90)
+									.movey(pulleyBearingSeperation/2)
+				CSG rightBearing = pulleyBearingCad.rotx(-90)
+									.movey(-pulleyBearingSeperation/2)
+				CSG cutout = new Toroid(pulleyRadius, pulleyRadius+cordDiameter/2).toCSG()
+				CSG pulley = new Cylinder(pulleyRadius+cordDiameter/2, pulleyWidth).toCSG()
+								.rotx(90)
+								.movey(-pulleyWidth/2)
+								.difference([leftBearing,rightBearing,cutout])
+				
+				CSG pulleyClearence = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleyWidth+pulleyClearenceDistance).toCSG()
+								.rotx(90)
+								.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
+				
+				double boltDistance = pulleyWidth/2+pulleyClearenceDistance/2+pulleySupportThickness
+				
+				CSG bolt = boltPulley
+							.rotx(90)
+							.movey(boltDistance)
+				CSG nutForPulley = nut.rotx(-90)
+								.movey(-boltDistance)
+				CSG supportPlate = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleySupportThickness).toCSG()
+									.rotx(90)
+									.difference(bolt)
+				CSG washerCone = new Cylinder(5.5/2,4, pulleyClearenceDistance/2,30).toCSG()
+									.rotx(-90)
+									.difference(bolt)
+				CSG leftSupport = supportPlate.toYMin()				
+									.union(washerCone.rotz(180).toYMin().movey(-pulleyClearenceDistance/2))
+									.movey(pulleyWidth/2+pulleyClearenceDistance/2)
+				CSG rightSupport = supportPlate.toYMax()
+									.union(washerCone.toYMax().movey(pulleyClearenceDistance/2))
+									.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
+				toAdd.add(rightSupport)
+				toAdd.add(leftSupport)
+				vitamins.add(pulley)
+				vitamins.add(leftBearing)
+				vitamins.add(rightBearing)
+				//vitamins.add(cutout)
+				vitamins.add(bolt)
+				vitamins.add(nutForPulley)
+				toCut.add(pulleyClearence)
+				for(def key:back.keySet()) {
+					def parts = back.get(key)
+					for(int i=0;i<parts.size();i++) {
+						parts.set(i,parts.get(i).movex(-distanceBoltToPulleyOutput))
+					}
+				}
 				return back
 			}
 			@Override
@@ -341,7 +408,11 @@ return new ICadGenerator(){
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
 				// TODO Auto-generated method stub
-				ArrayList<CSG> back =bearingBlock()
+				HashMap<String,ArrayList<CSG>> bb =bearingBlock()
+				def back =[]
+				back.addAll(bb.get("add"))
+				//back.addAll(bb.get("cut"))
+				back.addAll(bb.get("vitamins"))
 				back.add(new Cube(1).toCSG())
 				for(CSG c:back)
 					c.setManipulator(arg0.getRootListener())
