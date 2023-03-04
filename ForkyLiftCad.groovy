@@ -452,7 +452,7 @@ return new ICadGenerator(){
 				CSG pulley = bb.get("vitamins").remove(0)
 				back.add(pulley)
 				liftCleat=liftCleat.union(bb.get("add"))
-				back.addAll(bb.get("add"))
+				//back.addAll(bb.get("add"))
 				back.addAll(bb.get("vitamins"))
 				pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				for(CSG c:bb.get("vitamins")) {
