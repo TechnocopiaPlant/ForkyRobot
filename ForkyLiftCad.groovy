@@ -35,7 +35,7 @@ return new ICadGenerator(){
 			double calculatedTotalWidth = numGridUnits*grid;
 			double braceInsetDistance=60
 			double boardThickness=6.3
-			double boxClearence = 8
+			double boxClearence = 10
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
 			double sideBraceDistacne =braceInsetDistance/2
 			double frontCutoutDistance = rodEmbedlen
@@ -53,7 +53,7 @@ return new ICadGenerator(){
 			double pulleyClearenceDistance=1
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
-			
+			double supportPulleyRad=pulleyRadius+cordDiameter+pulleyClearenceDistance
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -67,40 +67,44 @@ return new ICadGenerator(){
 				back.put("add",toAdd)
 				back.put("cut",toCut)
 				back.put("vitamins",vitamins)
-				
+
 				CSG leftBearing = pulleyBearingCad.rotx(90)
-									.movey(pulleyBearingSeperation/2)
+						.movey(pulleyBearingSeperation/2)
 				CSG rightBearing = pulleyBearingCad.rotx(-90)
-									.movey(-pulleyBearingSeperation/2)
+						.movey(-pulleyBearingSeperation/2)
 				CSG cutout = new Toroid(pulleyRadius, pulleyRadius+cordDiameter/2).toCSG()
 				CSG pulley = new Cylinder(pulleyRadius+cordDiameter/2, pulleyWidth).toCSG()
-								.rotx(90)
-								.movey(-pulleyWidth/2)
-								.difference([leftBearing,rightBearing,cutout])
-				
-				CSG pulleyClearence = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleyWidth+pulleyClearenceDistance).toCSG()
-								.rotx(90)
-								.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
-				
+						.rotx(90)
+						.movey(-pulleyWidth/2)
+						.difference([
+							leftBearing,
+							rightBearing,
+							cutout
+						])
+
+				CSG pulleyClearenceShape = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleyWidth+pulleyClearenceDistance).toCSG()
+						.rotx(90)
+						.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
+
 				double boltDistance = pulleyWidth/2+pulleyClearenceDistance/2+pulleySupportThickness
-				
+
 				CSG bolt = boltPulley
-							.rotx(90)
-							.movey(boltDistance)
+						.rotx(90)
+						.movey(boltDistance)
 				CSG nutForPulley = nut.rotx(-90)
-								.movey(-boltDistance)
-				CSG supportPlate = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleySupportThickness).toCSG()
-									.rotx(90)
-									.difference(bolt)
+						.movey(-boltDistance)
+				CSG supportPlate = new Cylinder(supportPulleyRad, pulleySupportThickness).toCSG()
+						.rotx(90)
+						.difference(bolt)
 				CSG washerCone = new Cylinder(5.5/2,4, pulleyClearenceDistance/2,30).toCSG()
-									.rotx(-90)
-									.difference(bolt)
-				CSG leftSupport = supportPlate.toYMin()				
-									.union(washerCone.rotz(180).toYMin().movey(-pulleyClearenceDistance/2))
-									.movey(pulleyWidth/2+pulleyClearenceDistance/2)
+						.rotx(-90)
+						.difference(bolt)
+				CSG leftSupport = supportPlate.toYMin()
+						.union(washerCone.rotz(180).toYMin().movey(-pulleyClearenceDistance/2))
+						.movey(pulleyWidth/2+pulleyClearenceDistance/2)
 				CSG rightSupport = supportPlate.toYMax()
-									.union(washerCone.toYMax().movey(pulleyClearenceDistance/2))
-									.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
+						.union(washerCone.toYMax().movey(pulleyClearenceDistance/2))
+						.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
 				toAdd.add(rightSupport)
 				toAdd.add(leftSupport)
 				vitamins.add(pulley)
@@ -109,9 +113,15 @@ return new ICadGenerator(){
 				//vitamins.add(cutout)
 				vitamins.add(bolt)
 				vitamins.add(nutForPulley)
-				toCut.add(pulleyClearence)
+				toCut.add(pulleyClearenceShape)
+				
+				CSG cord = new Cylinder(cordDiameter/2+(pulleyClearenceDistance+2), rodlen*4).toCSG()
+							.movez(- rodlen*2)
+				toCut.add(cord.movex(distanceBoltToPulleyOutput))
+				toCut.add(cord.movex(-distanceBoltToPulleyOutput))
 				for(def key:back.keySet()) {
 					def parts = back.get(key)
+					println key+" is "+parts
 					for(int i=0;i<parts.size();i++) {
 						parts.set(i,parts.get(i).movex(-distanceBoltToPulleyOutput).transformed(location))
 					}
@@ -178,7 +188,7 @@ return new ICadGenerator(){
 					bearingInCShape = supportBlock.movey(calculatedTotalWidth-lastStageInset)
 							.union(supportBlock.movey(-calculatedTotalWidth+lastStageInset))
 				}
-				CSG board = new Cube(boardThickness,boardWidth+sideBraceDistacne*2,rodlen+sideBraceDistacne*2).toCSG()
+				CSG board = new Cube(boardThickness,boardWidth+sideBraceDistacne*2-boxClearence,rodlen+sideBraceDistacne*2).toCSG()
 						.toZMin()
 						.movez(-sideBraceDistacne)
 				CSG cutout = new Cube(boardThickness,boardWidth-rodEmbedlen*2,rodlen-rodEmbedlen*2).toCSG()
@@ -192,7 +202,7 @@ return new ICadGenerator(){
 						.movex(rodToBoardDistance)
 				int stepOffset = 0;
 				def clearenceParts=[]
-				
+
 				for(double i=-calculatedTotalWidth;i<calculatedTotalWidth+1;i+=(calculatedTotalWidth*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					def lastBraceDist=lastStageInset
@@ -215,7 +225,7 @@ return new ICadGenerator(){
 							.movey(rodSeperation)
 					CSG lowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.movez(rodEmbedlen),kin.getDhLink(linkIndex))
 							.movey(rodSeperation).hull()
-					
+
 					if (linkIndex>0) {
 						def dh = kin.getDhLink(linkIndex-1)
 						CSG lastupperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
@@ -250,23 +260,22 @@ return new ICadGenerator(){
 					rod.addAssemblyStep( 7+stepOffset, new Transform().movez(-rodlen-braceInsetDistance-bracing))
 				}
 
-				double shaftHolderY=calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2
+				double shaftHolderY=calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2-boxClearence
 				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
 				CSG topBottomBlock = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
 						.toZMin()
-				if(linkIndex!=2) {
-					CSG topBottomBlockCutout = new Cube(
-							depthOcCSection + boardThickness+boxClearence,
-							shaftHolderY - braceInsetDistance*2+boxClearence,
-							sideBraceDistacne+rodEmbedlen).toCSG()
-							.toXMax()
-							.movex(rodToBoardDistance)
-							.toZMin()
-					topBottomBlock=topBottomBlock.difference(topBottomBlockCutout)
+				//if(linkIndex!=2) {
+				CSG topBottomBlockCutout = new Cube(
+						depthOcCSection + boardThickness+boxClearence,
+						shaftHolderY - braceInsetDistance*2+boxClearence,
+						sideBraceDistacne+rodEmbedlen+supportPulleyRad*2).toCSG()
+						.toXMax()
+						.movex(rodToBoardDistance)
+						.toZMin()
 
-				}
+				//}
 
 				CSG topBlock=topBottomBlock
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2)
@@ -286,21 +295,45 @@ return new ICadGenerator(){
 				}else {
 
 				}
+				double pulleyLocation=(calculatedTotalWidth-stageInset - cordDiameter-bearingDiam/2)
+				if(linkIndex ==2) {
+					pulleyLocation=distanceBoltToPulleyOutput
+				}
+				Transform topLeft = new Transform()
+						.rotZ(45)
+						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
+						.movey(pulleyLocation)
+				Transform topRight = new Transform()
+						.rotZ(-45)
+						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
+						.movey(-pulleyLocation)
 
-
-
-				if(linkIndex==0) {
-					Transform topLeft = new Transform()
-										.rotZ(90)
-										.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
-										.movey(calculatedTotalWidth-stageInset - cordDiameter-bearingDiam/2)
-					HashMap<String,ArrayList<CSG>> bb =pulleyGen(topLeft)
+				for(Transform tf:[topLeft, topRight]) {
+					HashMap<String,ArrayList<CSG>> bb =pulleyGen(tf)
 					topBlock=topBlock.difference(bb.get("cut"))
 					CSG pulley = bb.get("vitamins").remove(0)
 					back.add(pulley)
 					topBlock=topBlock.union(bb.get("add"))
+							.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2))
+							.difference(backBoard)
 					vitamins.addAll(bb.get("vitamins"))
 					back.addAll(bb.get("vitamins"))
+					if(linkIndex==0) {
+						pulley.setManipulator(kin.getRootListener())
+					}else {
+						pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					}
+					for(CSG c:bb.get("vitamins")) {
+						if(linkIndex==0) {
+							c.setManipulator(kin.getRootListener())
+						}else {
+							c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+						}
+					}
+				}
+
+				if(linkIndex==0) {
+
 					//makeLink0( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
 				if(linkIndex==1) {
@@ -314,8 +347,8 @@ return new ICadGenerator(){
 					c.setColor(Color.SILVER)
 					c.setMfg({incoming->return null})
 				}
-				
-				
+
+
 				def braceBlocks = [topBlock, bottomBlock]
 				for(CSG c:braceBlocks) {
 					if(linkIndex==0) {
@@ -352,16 +385,16 @@ return new ICadGenerator(){
 				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
 				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*(3+stepIndex*2)))
 				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight*(3*stepIndex +1)-5))
-//				for(CSG c:clearenceParts) {
-//					if(linkIndex==0) {
-//						c.setManipulator(kin.getRootListener())
-//					}else {
-//						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-//					}
-//					c.setColor(Color.WHITE)
-//					c.setMfg({incoming->return null})
-//					back.add(c)
-//				}
+				//				for(CSG c:clearenceParts) {
+				//					if(linkIndex==0) {
+				//						c.setManipulator(kin.getRootListener())
+				//					}else {
+				//						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+				//					}
+				//					c.setColor(Color.WHITE)
+				//					c.setMfg({incoming->return null})
+				//					back.add(c)
+				//				}
 				return back;
 			}
 			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
@@ -408,22 +441,38 @@ return new ICadGenerator(){
 						.union(bearingBlock)
 						.union(heel)
 						.difference(bucket)
+
+
+				TransformNR step = new TransformNR(kin.getDhLink(linkIndex).DhStep(0)).inverse()
+				Transform pulleyLocation =  com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step).apply(new Transform().rotZ(90))
+											.movey(-distanceBoltToPulleyOutput)
+				
+				HashMap<String,ArrayList<CSG>> bb =pulleyGen(pulleyLocation)
+				liftCleat=liftCleat.difference(bb.get("cut"))
+				CSG pulley = bb.get("vitamins").remove(0)
+				back.add(pulley)
+				liftCleat=liftCleat.union(bb.get("add"))
+				back.addAll(bb.get("add"))
+				back.addAll(bb.get("vitamins"))
+				pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+				for(CSG c:bb.get("vitamins")) {
+					c.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+				}
+				
+				
 				bucketCleat.setColor(Color.BLUE)
 				bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-
-				liftCleat.setColor(Color.PINK)
-				liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-
 				bucket.setColor(Color.WHITE)
 				bucket.setMfg({incoming->return null})
 				bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
+				liftCleat.setColor(Color.PINK)
+				liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				back.add(bucket)
 				back.add(bucketCleat)
 				back.add(liftCleat)
 				bucket.addAssemblyStep( 10, new Transform().movez(bucketHeightCentering*2))
 				bucketCleat.addAssemblyStep( 10, new Transform().movez(bucketHeightCentering*2))
 				bucket.addAssemblyStep(9, new Transform().movex(bucketHeightCentering*2))
-
 				liftCleat.addAssemblyStep( 1, new Transform().movex(cleatDepth+cleatBracing))
 			}
 			@Override
