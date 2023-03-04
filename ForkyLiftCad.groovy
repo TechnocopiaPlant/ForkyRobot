@@ -31,7 +31,7 @@ return new ICadGenerator(){
 			double rodlen = 500
 			double rodEmbedlen =10
 			double grid =25;
-			int numGridUnits = 6;
+			int numGridUnits = 7;
 			double calculatedTotalWidth = numGridUnits*grid;
 			double braceInsetDistance=60
 			double boardThickness=6.3
@@ -46,7 +46,7 @@ return new ICadGenerator(){
 			double bucketHeight = 442.8
 			double lipHeight=106.7
 			double bracingBetweenStages = 0;//rodToBoardDistance*2+boardThickness*2+boxClearence
-			double pulleyRadius = 10
+			double pulleyRadius = 12
 			double cordDiameter = 6
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
@@ -114,9 +114,9 @@ return new ICadGenerator(){
 				vitamins.add(bolt)
 				vitamins.add(nutForPulley)
 				toCut.add(pulleyClearenceShape)
-				
+
 				CSG cord = new Cylinder(cordDiameter/2+(pulleyClearenceDistance+2), rodlen*4).toCSG()
-							.movez(- rodlen*2)
+						.movez(- rodlen*2)
 				toCut.add(cord.movex(distanceBoltToPulleyOutput))
 				toCut.add(cord.movex(-distanceBoltToPulleyOutput))
 				for(def key:back.keySet()) {
@@ -262,6 +262,7 @@ return new ICadGenerator(){
 
 				double shaftHolderY=calculatedTotalWidth*2-stageInset*2+sideBraceDistacne*2+rodEmbedlen*2-boxClearence
 				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
+				double topBottomZHeight = sideBraceDistacne+rodEmbedlen
 				CSG topBottomBlock = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
@@ -296,15 +297,52 @@ return new ICadGenerator(){
 
 				}
 				double pulleyLocation=(calculatedTotalWidth-stageInset - cordDiameter-bearingDiam/2)
+				double pulleyLocationBottom=(shaftHolderY/2 -cordDiameter-pulleyClearenceDistance*2)
 				if(linkIndex ==2) {
 					pulleyLocation=distanceBoltToPulleyOutput
 				}
+				Transform bottomLeft = new Transform()
+						.rotZ(-50)
+						.movez(-4-sideBraceDistacne)
+						.movey(pulleyLocationBottom)
+				Transform bottomRight = new Transform()
+						.rotZ(50)
+						.movez(-4-sideBraceDistacne)
+						.movey(-pulleyLocationBottom)
+
+				for(Transform tf:[bottomLeft, bottomRight]) {
+					if(linkIndex!=0) {
+						HashMap<String,ArrayList<CSG>> bb =pulleyGen(tf)
+						CSG pulley = bb.get("vitamins").remove(0)
+						back.add(pulley)
+						bottomBlock=bottomBlock.difference(bb.get("cut"))
+						bottomBlock=bottomBlock.union(bb.get("add"))
+						vitamins.addAll(bb.get("vitamins"))
+						back.addAll(bb.get("vitamins"))
+						if(linkIndex==0) {
+							pulley.setManipulator(kin.getRootListener())
+						}else {
+							pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+						}
+						for(CSG c:bb.get("vitamins")) {
+							if(linkIndex==0) {
+								c.setManipulator(kin.getRootListener())
+							}else {
+								c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+							}
+						}
+					}
+					bottomBlock=bottomBlock
+							.difference(topBottomBlockCutout.movez(-sideBraceDistacne))
+							.difference(backBoard)
+		
+				}
 				Transform topLeft = new Transform()
-						.rotZ(45)
+						.rotZ(55)
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
 						.movey(pulleyLocation)
 				Transform topRight = new Transform()
-						.rotZ(-45)
+						.rotZ(-55)
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
 						.movey(-pulleyLocation)
 
@@ -331,7 +369,6 @@ return new ICadGenerator(){
 						}
 					}
 				}
-
 				if(linkIndex==0) {
 
 					//makeLink0( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
@@ -445,8 +482,8 @@ return new ICadGenerator(){
 
 				TransformNR step = new TransformNR(kin.getDhLink(linkIndex).DhStep(0)).inverse()
 				Transform pulleyLocation =  com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step).apply(new Transform().rotZ(90))
-											.movey(-distanceBoltToPulleyOutput)
-				
+						.movey(-distanceBoltToPulleyOutput)
+
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(pulleyLocation)
 				liftCleat=liftCleat.difference(bb.get("cut"))
 				CSG pulley = bb.get("vitamins").remove(0)
@@ -458,8 +495,8 @@ return new ICadGenerator(){
 				for(CSG c:bb.get("vitamins")) {
 					c.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				}
-				
-				
+
+
 				bucketCleat.setColor(Color.BLUE)
 				bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bucket.setColor(Color.WHITE)
@@ -480,9 +517,9 @@ return new ICadGenerator(){
 				// TODO Auto-generated method stub
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
-				back.addAll(bb.get("add"))
+				//back.addAll(bb.get("add"))
 				//back.addAll(bb.get("cut"))
-				back.addAll(bb.get("vitamins"))
+				//back.addAll(bb.get("vitamins"))
 				back.add(new Cube(1).toCSG())
 				for(CSG c:back)
 					c.setManipulator(arg0.getRootListener())
