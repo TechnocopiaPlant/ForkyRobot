@@ -53,12 +53,13 @@ return new ICadGenerator(){
 			double pulleyClearenceDistance=1
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
+			
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
 				return incoming.transformed(move)
 			}
-			public HashMap<String,ArrayList<CSG>> bearingBlock(){
+			public HashMap<String,ArrayList<CSG>> pulleyGen(Transform location){
 				HashMap<String,ArrayList<CSG>> back= []
 				def toAdd= []
 				def toCut=[]
@@ -112,7 +113,7 @@ return new ICadGenerator(){
 				for(def key:back.keySet()) {
 					def parts = back.get(key)
 					for(int i=0;i<parts.size();i++) {
-						parts.set(i,parts.get(i).movex(-distanceBoltToPulleyOutput))
+						parts.set(i,parts.get(i).movex(-distanceBoltToPulleyOutput).transformed(location))
 					}
 				}
 				return back
@@ -191,7 +192,7 @@ return new ICadGenerator(){
 						.movex(rodToBoardDistance)
 				int stepOffset = 0;
 				def clearenceParts=[]
-
+				
 				for(double i=-calculatedTotalWidth;i<calculatedTotalWidth+1;i+=(calculatedTotalWidth*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					def lastBraceDist=lastStageInset
@@ -277,9 +278,7 @@ return new ICadGenerator(){
 					bearingInCShape=bearingInCShape.difference(clearenceParts)
 					bottomBlock=bottomBlock.union(bearingInCShape)
 				}
-				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
-				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*(3+stepIndex*2)))
-				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight*(3*stepIndex +1)-5))
+
 				if(linkIndex==2) {
 					bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
 							.difference(vitamins)
@@ -289,6 +288,34 @@ return new ICadGenerator(){
 				}
 
 
+
+				if(linkIndex==0) {
+					Transform topLeft = new Transform()
+										.rotZ(90)
+										.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
+										.movey(calculatedTotalWidth-stageInset - cordDiameter-bearingDiam/2)
+					HashMap<String,ArrayList<CSG>> bb =pulleyGen(topLeft)
+					topBlock=topBlock.difference(bb.get("cut"))
+					CSG pulley = bb.get("vitamins").remove(0)
+					back.add(pulley)
+					topBlock=topBlock.union(bb.get("add"))
+					vitamins.addAll(bb.get("vitamins"))
+					back.addAll(bb.get("vitamins"))
+					//makeLink0( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
+				}
+				if(linkIndex==1) {
+					//makeLink1( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
+				}
+				if(linkIndex==2) {
+
+					makeLink2( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
+				}
+				for(CSG c:vitamins) {
+					c.setColor(Color.SILVER)
+					c.setMfg({incoming->return null})
+				}
+				
+				
 				def braceBlocks = [topBlock, bottomBlock]
 				for(CSG c:braceBlocks) {
 					if(linkIndex==0) {
@@ -296,7 +323,12 @@ return new ICadGenerator(){
 					}else {
 						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 					}
-					c.setColor(Color.color(Math.random(), Math.random(), Math.random()))
+					if(linkIndex==0)
+						c.setColor(Color.web("#4FC3C8"))
+					if(linkIndex==1)
+						c.setColor(Color.web("#00ff00"))
+					if(linkIndex==2)
+						c.setColor(Color.web("#ff00ff"))
 					back.add(c)
 				}
 				def boards = [backBoard]
@@ -317,20 +349,9 @@ return new ICadGenerator(){
 					c.addExportFormat("svg")
 					back.add(c)
 				}
-				if(linkIndex==0) {
-					//makeLink0( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
-				}
-				if(linkIndex==1) {
-					//makeLink1( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
-				}
-				if(linkIndex==2) {
-
-					makeLink2( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
-				}
-				for(CSG c:vitamins) {
-					c.setColor(Color.SILVER)
-					c.setMfg({incoming->return null})
-				}
+				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
+				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*(3+stepIndex*2)))
+				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight*(3*stepIndex +1)-5))
 //				for(CSG c:clearenceParts) {
 //					if(linkIndex==0) {
 //						c.setManipulator(kin.getRootListener())
@@ -408,7 +429,7 @@ return new ICadGenerator(){
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
 				// TODO Auto-generated method stub
-				HashMap<String,ArrayList<CSG>> bb =bearingBlock()
+				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
 				back.addAll(bb.get("add"))
 				//back.addAll(bb.get("cut"))
