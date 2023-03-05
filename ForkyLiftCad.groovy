@@ -9,6 +9,7 @@ import com.neuronrobotics.sdk.addons.kinematics.math.TransformNR
 import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cube
 import eu.mihosoft.vrl.v3d.Cylinder
+import eu.mihosoft.vrl.v3d.Parabola
 import eu.mihosoft.vrl.v3d.Toroid
 import eu.mihosoft.vrl.v3d.Transform
 import javafx.scene.paint.Color
@@ -81,7 +82,6 @@ return new ICadGenerator(){
 							rightBearing,
 							cutout
 						])
-
 				CSG pulleyClearenceShape = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleyWidth+pulleyClearenceDistance).toCSG()
 						.rotx(90)
 						.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
@@ -114,9 +114,12 @@ return new ICadGenerator(){
 				vitamins.add(bolt)
 				vitamins.add(nutForPulley)
 				toCut.add(pulleyClearenceShape)
-
-				CSG cord = new Cylinder(cordDiameter/2+(pulleyClearenceDistance+2), rodlen*4).toCSG()
-						.movez(- rodlen*2)
+				double coneStartOffset=10
+				CSG cordPart =  Parabola.cone(cordDiameter*6, rodlen+coneStartOffset)
+								.toZMax()
+								.movez(coneStartOffset)
+								
+				CSG cord = cordPart.union(cordPart.rotx(180))
 				toCut.add(cord.movex(distanceBoltToPulleyOutput))
 				toCut.add(cord.movex(-distanceBoltToPulleyOutput))
 				for(def key:back.keySet()) {
@@ -332,9 +335,13 @@ return new ICadGenerator(){
 							}
 						}
 					}
-					bottomBlock=bottomBlock
-							.difference(topBottomBlockCutout.movez(-sideBraceDistacne))
-							.difference(backBoard)
+					if(linkIndex!=2) {
+						bottomBlock=bottomBlock
+								.difference(topBottomBlockCutout.movez(-sideBraceDistacne))
+								.difference(backBoard)
+					}else {
+						
+					}
 		
 				}
 				Transform topLeft = new Transform()
@@ -352,8 +359,10 @@ return new ICadGenerator(){
 					CSG pulley = bb.get("vitamins").remove(0)
 					back.add(pulley)
 					topBlock=topBlock.union(bb.get("add"))
-							.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2))
-							.difference(backBoard)
+					if(linkIndex!=2)
+						topBlock=topBlock
+								.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2))
+								.difference(backBoard)
 					vitamins.addAll(bb.get("vitamins"))
 					back.addAll(bb.get("vitamins"))
 					if(linkIndex==0) {
@@ -517,9 +526,9 @@ return new ICadGenerator(){
 				// TODO Auto-generated method stub
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
-				//back.addAll(bb.get("add"))
-				//back.addAll(bb.get("cut"))
-				//back.addAll(bb.get("vitamins"))
+				back.addAll(bb.get("add"))
+				back.addAll(bb.get("cut"))
+				back.addAll(bb.get("vitamins"))
 				back.add(new Cube(1).toCSG())
 				for(CSG c:back)
 					c.setManipulator(arg0.getRootListener())
