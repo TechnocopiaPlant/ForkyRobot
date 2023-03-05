@@ -61,6 +61,9 @@ return new ICadGenerator(){
 				return incoming.transformed(move)
 			}
 			public HashMap<String,ArrayList<CSG>> pulleyGen(Transform location){
+				return pulleyGen( location, false)
+			}
+			public HashMap<String,ArrayList<CSG>> pulleyGen(Transform location, boolean useStraitPlugs){
 				HashMap<String,ArrayList<CSG>> back= []
 				def toAdd= []
 				def toCut=[]
@@ -82,6 +85,7 @@ return new ICadGenerator(){
 							rightBearing,
 							cutout
 						])
+
 				CSG pulleyClearenceShape = new Cylinder(pulleyRadius+cordDiameter+pulleyClearenceDistance, pulleyWidth+pulleyClearenceDistance).toCSG()
 						.rotx(90)
 						.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
@@ -114,12 +118,15 @@ return new ICadGenerator(){
 				vitamins.add(bolt)
 				vitamins.add(nutForPulley)
 				toCut.add(pulleyClearenceShape)
-				double coneStartOffset=10
+								double coneStartOffset=10
 				CSG cordPart =  Parabola.cone(cordDiameter*6, rodlen+coneStartOffset)
 								.toZMax()
 								.movez(coneStartOffset)
 								
 				CSG cord = cordPart.union(cordPart.rotx(180))
+				if(useStraitPlugs)
+					cord = new Cylinder(cordDiameter/2+(pulleyClearenceDistance+2), rodlen*4).toCSG()
+							.movez(- rodlen*2)
 				toCut.add(cord.movex(distanceBoltToPulleyOutput))
 				toCut.add(cord.movex(-distanceBoltToPulleyOutput))
 				for(def key:back.keySet()) {
@@ -493,7 +500,7 @@ return new ICadGenerator(){
 				Transform pulleyLocation =  com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step).apply(new Transform().rotZ(90))
 						.movey(-distanceBoltToPulleyOutput)
 
-				HashMap<String,ArrayList<CSG>> bb =pulleyGen(pulleyLocation)
+				HashMap<String,ArrayList<CSG>> bb =pulleyGen(pulleyLocation,true)
 				liftCleat=liftCleat.difference(bb.get("cut"))
 				CSG pulley = bb.get("vitamins").remove(0)
 				back.add(pulley)
@@ -526,9 +533,9 @@ return new ICadGenerator(){
 				// TODO Auto-generated method stub
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
-				back.addAll(bb.get("add"))
-				back.addAll(bb.get("cut"))
-				back.addAll(bb.get("vitamins"))
+				//back.addAll(bb.get("add"))
+				//back.addAll(bb.get("cut"))
+				//back.addAll(bb.get("vitamins"))
 				back.add(new Cube(1).toCSG())
 				for(CSG c:back)
 					c.setManipulator(arg0.getRootListener())
