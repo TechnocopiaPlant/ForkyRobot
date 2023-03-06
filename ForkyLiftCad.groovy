@@ -745,7 +745,7 @@ return new ICadGenerator(){
 						.toXMin()
 						.movez(lipHeight+cleatHeight*2+bucketHeightCentering)
 				
-				kin.setRobotToFiducialTransform(new TransformNR(0, 0, -bucket.getMinZ(), new RotationNR()))
+				
 				CSG bucketCleat=cleat.rotz(180)
 						.movez(cleatHeight+bucketHeightCentering)
 						.difference(bucket)
