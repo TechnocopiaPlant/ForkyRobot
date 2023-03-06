@@ -4,6 +4,7 @@ import com.neuronrobotics.bowlerstudio.vitamins.Vitamins
 import com.neuronrobotics.sdk.addons.kinematics.DHLink
 import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
 import com.neuronrobotics.sdk.addons.kinematics.MobileBase
+import com.neuronrobotics.sdk.addons.kinematics.math.RotationNR
 import com.neuronrobotics.sdk.addons.kinematics.math.TransformNR
 
 import eu.mihosoft.vrl.v3d.CSG
@@ -731,6 +732,7 @@ return new ICadGenerator(){
 				double cleatHeight = cleat.getTotalZ()
 				double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
 				kin.setDH_R(linkIndex, cleatPlacement)
+				
 				CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-boxClearence*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
 						.toZMin()
 						.movez(-bucketHeightCentering)
@@ -742,6 +744,8 @@ return new ICadGenerator(){
 						.union(bucketRim)
 						.toXMin()
 						.movez(lipHeight+cleatHeight*2+bucketHeightCentering)
+				
+				kin.setRobotToFiducialTransform(new TransformNR(0, 0, -bucket.getMinZ(), new RotationNR()))
 				CSG bucketCleat=cleat.rotz(180)
 						.movez(cleatHeight+bucketHeightCentering)
 						.difference(bucket)
