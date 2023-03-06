@@ -287,17 +287,15 @@ return new ICadGenerator(){
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 
-					upperBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(bearingHeight+5))
-					lowerBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(-(bracing+5)))
+					upperBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(bearingHeight+5))
+					lowerBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(-(bracing+5)))
 					if(linkIndex!=2) {
 						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
-						upperBearing.addAssemblyStep( 2, bottomSwingNext)
 						
 
 						lowerBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						lowerBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
-						lowerBearing.addAssemblyStep( 2, bottomSwingNext)
 						
 					}
 					rod.addAssemblyStep( 8+stepOffset, blockXAssembly)
