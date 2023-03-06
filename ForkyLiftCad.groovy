@@ -145,7 +145,12 @@ return new ICadGenerator(){
 					def parts = back.get(key)
 					println key+" is "+parts
 					for(int i=0;i<parts.size();i++) {
-						parts.set(i,parts.get(i).movex(-distanceBoltToPulleyOutput).transformed(location))
+						def partsGetMovexTransformed = parts.get(i).movex(-distanceBoltToPulleyOutput).transformed(location)
+						partsGetMovexTransformed.setMfg({incoming->
+							return incoming.transformed(location.inverse()).rotx(90).toZMin()
+							
+						})
+						parts.set(i,partsGetMovexTransformed)
 					}
 				}
 				return back
@@ -403,6 +408,7 @@ return new ICadGenerator(){
 						.movez(-4-sideBraceDistacne)
 						.movey(-pulleyLocationBottom)
 				Transform topVitaminsMove=new Transform().movez(bearingHeight+5)
+				int pulleyIndex=1
 				for(Transform tf:[bottomLeft, bottomRight]) {
 					if(linkIndex!=0) {
 						HashMap<String,ArrayList<CSG>> bb =pulleyGen(tf)
@@ -421,7 +427,8 @@ return new ICadGenerator(){
 						vitamins.addAll(bb.get("vitamins"))
 						back.addAll(bb.get("vitamins"))
 						pulley.setManipulator(frameListener)
-	
+						pulley.setName("Bottom-Pulley-"+pulleyIndex+"-link-"+linkIndex)
+						
 						pulley.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						pulley.addAssemblyStep( 9+stepOffset, blocZAssembly)
 						for(CSG c:bb.get("vitamins")) {
@@ -466,7 +473,7 @@ return new ICadGenerator(){
 						.rotZ(-45)
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
 						.movey(-pulleyLocation)
-
+				pulleyIndex=1
 				for(Transform tf:[topLeft, topRight]) {
 					HashMap<String,ArrayList<CSG>> bb =pulleyGen(tf)
 					topBlock=topBlock.difference(bb.get("cut"))
@@ -477,6 +484,8 @@ return new ICadGenerator(){
 					def rightBearing=vits.get(1)
 					def bolt=vits.get(2)
 					def nutForPulley=vits.get(3)
+					pulley.setName("Top-Pulley-"+pulleyIndex+"-link-"+linkIndex)
+					pulleyIndex++
 					back.add(pulley)
 					topBlock=topBlock.union(bb.get("add"))
 					if(linkIndex!=2)
@@ -644,7 +653,8 @@ return new ICadGenerator(){
 				}
 				
 				back.addAll(nutsAndBolts)
-				vitamins.addAll(nutsAndBolts)				
+				vitamins.addAll(nutsAndBolts)	
+				int blockIndex=1
 				for(CSG c:newBraceBlocks) {
 					if(c.getMaxZ()<rodlen/2) {
 						c.addAssemblyStep( 8+stepOffset, blockXAssembly)
@@ -662,6 +672,8 @@ return new ICadGenerator(){
 					if(linkIndex==2)
 						c.setColor(Color.web("#ff00ff"))
 					back.add(c)
+					c.setName("Bracing-Block-"+blockIndex+"-link-"+linkIndex)
+					blockIndex++
 				}
 				for(CSG c:vitamins) {
 					c.setColor(Color.SILVER)
@@ -672,6 +684,7 @@ return new ICadGenerator(){
 				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
 				backBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
 				frontBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+				int boardIndex=1
 				for(CSG c:boards) {
 					if(c.getTotalX()-0.1<boardThickness)
 						if(c.getMaxX()>0)
@@ -684,7 +697,8 @@ return new ICadGenerator(){
 							c.setMfg({incoming->return incoming.rotx(90).toZMin()})
 						else
 							c.setMfg({incoming->return incoming.rotx(-90).toZMin()})
-							
+					c.setName("Board-"+boardIndex+"-link-"+linkIndex)	
+					boardIndex++	
 					c.setManipulator(frameListener)
 					c.setColor(Color.web("#EDCAA1"))
 					c.addExportFormat("svg")
@@ -758,6 +772,7 @@ return new ICadGenerator(){
 				def bolt=vits.get(2)
 				def nutForPulley=vits.get(3)
 				back.add(pulley)
+				pulley.setName("EOAT-Pulley")
 				liftCleat=liftCleat.union(bb.get("add"))
 				//bb.get("vitamins").addAll(bb.get("cut"))
 				back.addAll(bb.get("vitamins"))
@@ -793,6 +808,8 @@ return new ICadGenerator(){
 				back.add(bucket)
 				back.add(bucketCleat)
 				back.add(liftCleat)
+				liftCleat.setName("EOAT-LiftCleat")
+				bucketCleat.setName("Bucket-LiftCleat")
 				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucketCleat.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
@@ -807,13 +824,11 @@ return new ICadGenerator(){
 				//back.addAll(bb.get("cut"))
 				//back.addAll(bb.get("vitamins"))
 				back.add(new Cube(1).toCSG())
-				for(CSG c:back)
+				for(CSG c:back) {
 					c.setManipulator(arg0.getRootListener())
-				for(DHParameterKinematics kin:arg0.getAllDHChains()) {
-					CSG limbRoot =new Cube(1).toCSG()
-					limbRoot.setManipulator(kin.getRootListener())
-					back.add(limbRoot)
+					c.setMfg({inc->return null})
 				}
+
 				return back;
 			}
 
