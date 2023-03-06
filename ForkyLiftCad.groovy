@@ -22,6 +22,7 @@ CSG boltPulley = Vitamins.get("capScrew", "M5x25")
 CSG vitamin_heatedThreadedInsert_M5 = Vitamins.get("heatedThreadedInsert", "M5")
 
 return new ICadGenerator(){
+			double maxPrinterDimention = 195
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			def pulleyBearingConfig = Vitamins.getConfiguration("ballBearing", pulleyBearingSize)
 			double bearingThickness = pulleyBearingConfig.width
@@ -231,6 +232,9 @@ return new ICadGenerator(){
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
 				Transform blockXAssembly =new Transform().movex(rodToBoardDistance*(3))
 				Transform blocZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
+				Transform bottomSwing =  new Transform().movex(100).rotY(30*(linkIndex+1))
+				Transform bottomSwingNext =  new Transform().movex(100).rotY(30*(linkIndex+2))
+				Transform topSplay = new Transform().movez(-100.0*(linkIndex+1))
 				for(double i=-rodSeperationTotal;i<rodSeperationTotal+1;i+=(rodSeperationTotal*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					def lastBraceDist=lastStageInset
@@ -283,14 +287,18 @@ return new ICadGenerator(){
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 
-					upperBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(bearingHeight+5))
-					lowerBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(-(bracing+5)))
+					upperBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(bearingHeight+5))
+					lowerBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(-(bracing+5)))
 					if(linkIndex!=2) {
 						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						upperBearing.addAssemblyStep( 2, bottomSwingNext)
+						
 
 						lowerBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						lowerBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						lowerBearing.addAssemblyStep( 2, bottomSwingNext)
+						
 					}
 					rod.addAssemblyStep( 8+stepOffset, blockXAssembly)
 					rod.addAssemblyStep( 9+stepOffset, blocZAssembly)
@@ -526,9 +534,57 @@ return new ICadGenerator(){
 					c.setColor(Color.SILVER)
 					c.setMfg({incoming->return null})
 				}
+				def braceBlocks = []
+				CSG bottomLeftBlock=null
+				CSG bottomRightBlock=null
+				CSG topLeftBlock=null
+				CSG topRightBlock=null
+				
+				if(topBlock.getTotalY()>maxPrinterDimention) {
+					double cutLine = topBlock.getMaxY()-bracing-braceInsetDistance
+					if(cutLine<1)
+						cutLine=1;
+					topLeftBlock=topBlock
+						.intersect(topBlock
+							.getBoundingBox()
+							.toYMin()
+							.movey(cutLine)
+							)
+					braceBlocks.add(topLeftBlock)
+					
+					topRightBlock=topBlock
+						.intersect(topBlock
+							.getBoundingBox()
+							.toYMax()
+							.movey(-cutLine)
+							)
+					braceBlocks.add(topRightBlock)
+				}else {
+					braceBlocks.add(topBlock)
+				}
+				if(bottomBlock.getTotalY()>maxPrinterDimention) {
+					double cutLine = bottomBlock.getMaxY()-bracing-braceInsetDistance
+					if(cutLine<1)
+						cutLine=1;
+					bottomLeftBlock=bottomBlock
+						.intersect(bottomBlock
+							.getBoundingBox()
+							.toYMin()
+							.movey(cutLine)
+							)
+					braceBlocks.add(bottomLeftBlock)
+					
+					bottomRightBlock=bottomBlock
+						.intersect(bottomBlock
+							.getBoundingBox()
+							.toYMax()
+							.movey(-cutLine)
+							)
+					braceBlocks.add(bottomRightBlock)
+				}else {
+					braceBlocks.add(bottomBlock)
+				}
 
-
-				def braceBlocks = [topBlock, bottomBlock]
 				for(CSG c:braceBlocks) {
 					if(linkIndex==0) {
 						c.setManipulator(kin.getRootListener())
@@ -561,13 +617,29 @@ return new ICadGenerator(){
 					c.addExportFormat("svg")
 					back.add(c)
 				}
-				Transform bottomSwing =  new Transform().movex(100).rotY(30*(linkIndex+1))
-				Transform topSplay = new Transform().movez(-100.0*(linkIndex+1))
-				topBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
-				bottomBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
-				bottomBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
-				bottomBlock.addAssemblyStep( 2, bottomSwing)
-				topBlock.addAssemblyStep( 2, topSplay )
+
+				if(topBlock.getTotalY()<maxPrinterDimention) {
+					topBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+					topBlock.addAssemblyStep( 2, topSplay )
+				}else {
+					topRightBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+					topRightBlock.addAssemblyStep( 2, topSplay )
+					topLeftBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+					topLeftBlock.addAssemblyStep( 2, topSplay )
+				}
+				if(bottomBlock.getTotalY()<maxPrinterDimention) {
+					bottomBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
+					bottomBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					bottomBlock.addAssemblyStep( 2, bottomSwing)
+				}else {
+					bottomLeftBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
+					bottomLeftBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					bottomLeftBlock.addAssemblyStep( 2, bottomSwing)
+					
+					bottomRightBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
+					bottomRightBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					bottomRightBlock.addAssemblyStep( 2, bottomSwing)
+				}
 
 				//				for(CSG c:clearenceParts) {
 				//					if(linkIndex==0) {
@@ -663,13 +735,13 @@ return new ICadGenerator(){
 				pulley.addAssemblyStep( 4, pulleyBearingSubAssembly)
 				leftBearing.addAssemblyStep( 4, pulleyBearingSubAssembly)
 				rightBearing.addAssemblyStep( 4, pulleyBearingSubAssembly)
-				
+
 				pulley.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
 				leftBearing.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
 				rightBearing.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
 				bolt.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
 				nutForPulley.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
-				
+
 				bucketCleat.setColor(Color.BLUE)
 				bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bucket.setColor(Color.WHITE)
