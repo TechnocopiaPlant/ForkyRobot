@@ -13,15 +13,17 @@ import eu.mihosoft.vrl.v3d.Parabola
 import eu.mihosoft.vrl.v3d.Toroid
 import eu.mihosoft.vrl.v3d.Transform
 import javafx.scene.paint.Color
+import javafx.scene.transform.Affine
 
 def bearingSize = "LM10UU"
 def pulleyBearingSize = "695zz"
 CSG pulleyBearingCad = Vitamins.get("ballBearing", pulleyBearingSize).hull()
 CSG nut = Vitamins.get("lockNut", "M5")
 CSG boltPulley = Vitamins.get("capScrew", "M5x25")
-CSG vitamin_heatedThreadedInsert_M5 = Vitamins.get("heatedThreadedInsert", "M5")
+CSG insert = Vitamins.get("heatedThreadedInsert", "M5")
 
 return new ICadGenerator(){
+			Transform liftCleatAssembly  =new Transform().movex(50)
 			double maxPrinterDimention = 195
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			def pulleyBearingConfig = Vitamins.getConfiguration("ballBearing", pulleyBearingSize)
@@ -232,9 +234,14 @@ return new ICadGenerator(){
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
 				Transform blockXAssembly =new Transform().movex(rodToBoardDistance*(3))
 				Transform blocZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
-				Transform bottomSwing =  new Transform().movex(100).rotY(30*(linkIndex+1))
-				Transform bottomSwingNext =  new Transform().movex(100).rotY(30*(linkIndex+2))
+				Transform bottomSwing =  new Transform().movex(100).movez(100*(linkIndex+1))
+				Transform bottomSwingNext =  new Transform().movex(100).movez(100*(linkIndex+2))
 				Transform topSplay = new Transform().movez(-100.0*(linkIndex+1))
+				Affine frameListener = null
+				if(linkIndex==0)
+					frameListener=kin.getRootListener()
+				else
+					frameListener=kin.getLinkObjectManipulator(linkIndex-1)
 				for(double i=-rodSeperationTotal;i<rodSeperationTotal+1;i+=(rodSeperationTotal*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					def lastBraceDist=lastStageInset
@@ -282,21 +289,23 @@ return new ICadGenerator(){
 					]
 					back.addAll(vits)
 					vitamins.addAll(vits)
-					if(linkIndex==0)
-						rod.setManipulator(kin.getRootListener())
-					else
-						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					rod.setManipulator(frameListener)
 
-					upperBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(bearingHeight+5))
-					lowerBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(-(bracing+5)))
+					upperBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(bearingHeight+5))
+					lowerBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(-(bearingHeight+5)))
 					if(linkIndex!=2) {
 						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						upperBearing.addAssemblyStep( 2, bottomSwingNext)
 						
 
 						lowerBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						lowerBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						lowerBearing.addAssemblyStep( 2, bottomSwingNext)
 						
+					}else {
+						upperBearing.addAssemblyStep( 2, liftCleatAssembly)
+						lowerBearing.addAssemblyStep( 2, liftCleatAssembly)
 					}
 					rod.addAssemblyStep( 8+stepOffset, blockXAssembly)
 					rod.addAssemblyStep( 9+stepOffset, blocZAssembly)
@@ -409,19 +418,13 @@ return new ICadGenerator(){
 						//bb.get("vitamins").addAll(cuts)
 						vitamins.addAll(bb.get("vitamins"))
 						back.addAll(bb.get("vitamins"))
-						if(linkIndex==0) {
-							pulley.setManipulator(kin.getRootListener())
-						}else {
-							pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-						}
+						pulley.setManipulator(frameListener)
+	
 						pulley.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						pulley.addAssemblyStep( 9+stepOffset, blocZAssembly)
 						for(CSG c:bb.get("vitamins")) {
-							if(linkIndex==0) {
-								c.setManipulator(kin.getRootListener())
-							}else {
-								c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-							}
+							c.setManipulator(frameListener)
+							
 							c.addAssemblyStep( 8+stepOffset, blockXAssembly)
 							c.addAssemblyStep( 9+stepOffset, blocZAssembly)
 						}
@@ -480,18 +483,10 @@ return new ICadGenerator(){
 								.difference(backBoard)
 					vitamins.addAll(bb.get("vitamins"))
 					back.addAll(bb.get("vitamins"))
-					if(linkIndex==0) {
-						pulley.setManipulator(kin.getRootListener())
-					}else {
-						pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-					}
+					pulley.setManipulator(frameListener)
 					pulley.addAssemblyStep( 8+stepOffset, topVitaminsMove)
 					for(CSG c:bb.get("vitamins")) {
-						if(linkIndex==0) {
-							c.setManipulator(kin.getRootListener())
-						}else {
-							c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-						}
+						c.setManipulator(frameListener)
 						c.addAssemblyStep( 8+stepOffset, topVitaminsMove)
 					}
 					Transform pulleyBearingSubAssembly = new Transform().movez(100)
@@ -528,10 +523,7 @@ return new ICadGenerator(){
 
 					makeLink2( back,   connectingBlockWidth, bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
 				}
-				for(CSG c:vitamins) {
-					c.setColor(Color.SILVER)
-					c.setMfg({incoming->return null})
-				}
+
 				def braceBlocks = []
 				CSG bottomLeftBlock=null
 				CSG bottomRightBlock=null
@@ -582,13 +574,85 @@ return new ICadGenerator(){
 				}else {
 					braceBlocks.add(bottomBlock)
 				}
-
+				def nutsAndBolts=[]
+				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
-					if(linkIndex==0) {
-						c.setManipulator(kin.getRootListener())
-					}else {
-						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
+					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+1))
+					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-1))
+					
+					double cornerBoltInset = 20
+					Transform upperRight = new Transform()
+							.move(backPlate.getMinX()-boardThickness,
+							backPlate.getMinY()+cornerBoltInset,
+							backPlate.getMaxZ()-cornerBoltInset)
+					Transform upperLeft = new Transform()
+							.move(backPlate.getMinX()-boardThickness,
+							backPlate.getMaxY()-cornerBoltInset,
+							backPlate.getMaxZ()-cornerBoltInset)
+					Transform lowerRight = new Transform()
+							.move(backPlate.getMinX()-boardThickness,
+							backPlate.getMinY()+cornerBoltInset,
+							backPlate.getMinZ()+cornerBoltInset)
+					Transform lowerLeft = new Transform()
+							.move(backPlate.getMinX()-boardThickness,
+							backPlate.getMaxY()-cornerBoltInset,
+							backPlate.getMinZ()+cornerBoltInset)
+							
+					Transform frontLeft = new Transform()
+							.move(frontPlate.getMaxX()+boardThickness,
+							frontPlate.getMaxY()-cornerBoltInset,
+							frontPlate.getMaxZ()-cornerBoltInset)
+					Transform frontRight = new Transform()
+							.move(frontPlate.getMaxX()+boardThickness,
+							frontPlate.getMinY()+cornerBoltInset,
+							frontPlate.getMaxZ()-cornerBoltInset)
+					def myBits=[]
+					for(Transform tf:[upperRight,upperLeft,lowerRight,lowerLeft,frontLeft,frontRight]) {
+						double angle=90
+						double pullnut=-30
+						double pullBolt=-300
+						if(tf.getX()>0) {
+							angle=-angle
+							pullnut=30
+							pullBolt=300
+						}
+						CSG tmp = boltPulley.roty(angle).transformed(tf)
+						CSG nutTmp = insert.movez(boardThickness).roty(-angle).transformed(tf)
+						
+						nutTmp.addAssemblyStep(1, new Transform().movex(pullnut))
+						tmp.addAssemblyStep(10, new Transform().movex(pullBolt))
+						if(c.getMaxZ()<rodlen/2) {
+							nutTmp.addAssemblyStep( 8+stepOffset, blockXAssembly)
+							nutTmp.addAssemblyStep( 9+stepOffset, blocZAssembly)
+							nutTmp.addAssemblyStep( 2, bottomSwing)
+						}else{							
+							nutTmp.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+							nutTmp.addAssemblyStep( 2, topSplay )
+						}
+						backBoard=backBoard.difference(tmp)
+						frontBoard=frontBoard.difference(tmp)
+						myBits.add(tmp)
+						myBits.add(nutTmp)
 					}
+					nutsAndBolts.addAll(myBits)
+					newBraceBlocks.add(c.difference(myBits))
+				}
+				for(CSG c:nutsAndBolts) {
+					c.setManipulator(frameListener)
+				}
+				
+				back.addAll(nutsAndBolts)
+				vitamins.addAll(nutsAndBolts)				
+				for(CSG c:newBraceBlocks) {
+					if(c.getMaxZ()<rodlen/2) {
+						c.addAssemblyStep( 8+stepOffset, blockXAssembly)
+						c.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						c.addAssemblyStep( 2, bottomSwing)
+					}else{
+						c.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+						c.addAssemblyStep( 2, topSplay )
+					}
+					c.setManipulator(frameListener)
 					if(linkIndex==0)
 						c.setColor(Color.web("#4FC3C8"))
 					if(linkIndex==1)
@@ -597,58 +661,25 @@ return new ICadGenerator(){
 						c.setColor(Color.web("#ff00ff"))
 					back.add(c)
 				}
-				def boards = [backBoard]
-				//if(linkIndex==2) {
-				boards.add(frontBoard)
-				//}
+				for(CSG c:vitamins) {
+					c.setColor(Color.SILVER)
+					c.setMfg({incoming->return null})
+				}
+				def boards = [backBoard,frontBoard]
+
 				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
 				backBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
 				frontBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
 
 				for(CSG c:boards) {
-					if(linkIndex==0) {
-						c.setManipulator(kin.getRootListener())
-					}else {
-						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-					}
+					c.setMfg({incoming->return incoming.roty(90).toZMin()})
+					c.setManipulator(frameListener)
 					c.setColor(Color.web("#EDCAA1"))
 					c.addExportFormat("svg")
 					back.add(c)
 				}
 
-				if(topBlock.getTotalY()<maxPrinterDimention) {
-					topBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
-					topBlock.addAssemblyStep( 2, topSplay )
-				}else {
-					topRightBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
-					topRightBlock.addAssemblyStep( 2, topSplay )
-					topLeftBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
-					topLeftBlock.addAssemblyStep( 2, topSplay )
-				}
-				if(bottomBlock.getTotalY()<maxPrinterDimention) {
-					bottomBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
-					bottomBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
-					bottomBlock.addAssemblyStep( 2, bottomSwing)
-				}else {
-					bottomLeftBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
-					bottomLeftBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
-					bottomLeftBlock.addAssemblyStep( 2, bottomSwing)
-					
-					bottomRightBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
-					bottomRightBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
-					bottomRightBlock.addAssemblyStep( 2, bottomSwing)
-				}
 
-				//				for(CSG c:clearenceParts) {
-				//					if(linkIndex==0) {
-				//						c.setManipulator(kin.getRootListener())
-				//					}else {
-				//						c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
-				//					}
-				//					c.setColor(Color.WHITE)
-				//					c.setMfg({incoming->return null})
-				//					back.add(c)
-				//				}
 				return back;
 			}
 			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
@@ -753,7 +784,7 @@ return new ICadGenerator(){
 				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucketCleat.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
-				liftCleat.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
+				liftCleat.addAssemblyStep( 2, liftCleatAssembly)
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
