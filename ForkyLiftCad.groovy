@@ -31,9 +31,6 @@ return new ICadGenerator(){
 			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize).hull()
 			double rodlen = 500
 			double rodEmbedlen =10
-
-
-
 			double boardThickness=6.3
 			double boxClearence = 10
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
@@ -45,7 +42,7 @@ return new ICadGenerator(){
 			double bucketHeight = 442.8
 			double lipHeight=106.7
 			double bracingBetweenStages = 0;//rodToBoardDistance*2+boardThickness*2+boxClearence
-			double pulleyRadius = 20
+			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2
 			double cordDiameter = 6
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
@@ -177,12 +174,12 @@ return new ICadGenerator(){
 				}
 				double connectionSection= bracingBetweenStages-boardThickness*2-boxClearence*2
 				println "Board distance  "+linkIndex+" is "+boardWidth
-				double connectingBlockWidth = boardWidth-rodEmbedlen*2-boxClearence
+				double connectingBlockWidth = boardWidth-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
 				CSG bearingBlock
 				CSG bearingInCShape
 				if(linkIndex==2) {
 					bearingBlock = new Cube(bearingBlcokBearingSection*2,
-							bearingBlockWidth,bracing- rodEmbedlen).toCSG()
+							bearingBlockWidth+xyOfPulleyDistance*2,bracing- rodEmbedlen).toCSG()
 							.toZMin()
 							.movez(rodEmbedlen)
 							.toXMin()
@@ -195,14 +192,33 @@ return new ICadGenerator(){
 							.movex(-bearingBlcokBearingSection)
 					bearingBlock=bearingBlock.union(connectingBlock)
 				}
+				double shaftHolderY=boardWidth
+				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
+				double topBottomZHeight = sideBraceDistacne+rodEmbedlen
+				double BackBraceHeight = sideBraceDistacne+bracing
+				double cutoutDepthTotal = depthOcCSection + boardThickness+boxClearence
+				double backBraceXDepth = shaftHolderX-cutoutDepthTotal
+				double braceBasez=sideBraceDistacne+rodEmbedlen
 				double bearingLocationOffset = xyOfPulleyDistance*1
-
-				CSG board = new Cube(boardThickness,boardWidth,rodlen+sideBraceDistacne*2).toCSG()
+				double cutoutWidth = shaftHolderY - braceInsetDistance*2+boxClearence
+				if(cutoutWidth<supportPulleyRad*2)
+					cutoutWidth=supportPulleyRad*2+1
+				double frontCutoutWidth = boardWidth-rodEmbedlen*2-xyOfPulleyDistance*2
+				double ZFrontCutout = rodlen-rodEmbedlen*2
+				double boardZTotal =rodlen+sideBraceDistacne*2
+				double zDisplacement=0
+				
+				if(linkIndex!=2) {
+					frontCutoutWidth = cutoutWidth
+					ZFrontCutout=boardZTotal
+					zDisplacement=-rodEmbedlen-sideBraceDistacne
+				}
+				CSG board = new Cube(boardThickness,boardWidth,boardZTotal).toCSG()
 						.toZMin()
 						.movez(-sideBraceDistacne)
-				CSG cutout = new Cube(boardThickness,boardWidth-rodEmbedlen*2,rodlen-rodEmbedlen*2).toCSG()
+				CSG cutout = new Cube(boardThickness,frontCutoutWidth,ZFrontCutout).toCSG()
 						.toZMin()
-						.movez(rodEmbedlen)
+						.movez(rodEmbedlen+zDisplacement)
 				CSG backBoard = board
 						.toXMax()
 						.movex(-rodToBoardDistance-depthOcCSection)
@@ -283,23 +299,37 @@ return new ICadGenerator(){
 						rod.addAssemblyStep( 7+stepOffset, new Transform().movez(rodlen+rodEmbedlen))
 				}
 
-				double shaftHolderY=boardWidth
-				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
-				double topBottomZHeight = sideBraceDistacne+rodEmbedlen
-				CSG topBottomBlock = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen).toCSG()
+
+				CSG topBottomBlock = new Cube(shaftHolderX,shaftHolderY,braceBasez).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
 						.toZMin()
 				//if(linkIndex!=2) {
-				double cutoutWidth = shaftHolderY - braceInsetDistance*2+boxClearence
-				if(cutoutWidth<supportPulleyRad*2)
-					cutoutWidth=supportPulleyRad*2+1
+
 				CSG topBottomBlockCutout = new Cube(
-						depthOcCSection + boardThickness+boxClearence,
+						cutoutDepthTotal,
 						cutoutWidth,
-						sideBraceDistacne+rodEmbedlen+supportPulleyRad*2).toCSG()
+						BackBraceHeight).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
+						.toZMin()
+				double filletRadius = 20
+				CSG filletCubePart = new Cube(filletRadius,filletRadius,shaftHolderY).toCSG()
+						.toZMin()
+						.toXMax()
+						.toYMin()
+				CSG FilletCyl = filletCubePart.difference(new Cylinder(filletRadius, shaftHolderY).toCSG())
+						.rotx(90)
+						.moveToCenterY()
+						.movex(filletRadius+backBraceXDepth/2)
+						.movez(filletRadius+braceBasez-BackBraceHeight/2)
+				CSG BackBrace = new Cube(backBraceXDepth,shaftHolderY,BackBraceHeight).toCSG()
+				if(linkIndex!=2) {
+					BackBrace=BackBrace
+							.union(FilletCyl)
+				}
+				BackBrace=BackBrace
+						.movex(-backBraceXDepth/2-cutoutDepthTotal+rodToBoardDistance)
 						.toZMin()
 				CSG IntersectionShape = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen+supportPulleyRad*2).toCSG()
 						.toXMax()
@@ -307,12 +337,14 @@ return new ICadGenerator(){
 						.toZMin()
 						.movez(-supportPulleyRad*2)
 						.movez(-sideBraceDistacne)
-				//}
+				
 
 				CSG topBlock=topBottomBlock
+						.union(BackBrace.rotx(180).movez(braceBasez))
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2)
 						.difference(clearenceParts)
 				CSG bottomBlock = topBottomBlock
+						.union(BackBrace)
 						.movez(-sideBraceDistacne)
 						.difference(clearenceParts)
 
@@ -390,7 +422,7 @@ return new ICadGenerator(){
 						pulley.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
 						leftBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
 						rightBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
-						
+
 						if(tf==bottomLeft) {
 							Transform boltSidePull =  new Transform().movey(25).movex(-25)
 							Transform nutSidePull = new Transform().movey(-25).movex(25)
@@ -405,7 +437,7 @@ return new ICadGenerator(){
 							nutForPulley.addAssemblyStep( 14+stepOffset, nutSidePull)
 							leftBearing.addAssemblyStep( 11+stepOffset, boltSidePull)
 							rightBearing.addAssemblyStep( 11+stepOffset, nutSidePull)
-							
+
 						}
 					}
 					bottomBlock=bottomBlock
@@ -459,7 +491,7 @@ return new ICadGenerator(){
 					pulley.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
 					leftBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
 					rightBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
-					
+
 					if(tf==topRight) {
 						Transform boltSidePull =  new Transform().movey(25).movex(-25)
 						Transform nutSidePull = new Transform().movey(-25).movex(25)
@@ -474,7 +506,7 @@ return new ICadGenerator(){
 						nutForPulley.addAssemblyStep( 14+stepOffset, nutSidePull)
 						leftBearing.addAssemblyStep( 11+stepOffset, boltSidePull)
 						rightBearing.addAssemblyStep( 11+stepOffset, nutSidePull)
-						
+
 					}
 				}
 
@@ -511,12 +543,12 @@ return new ICadGenerator(){
 					back.add(c)
 				}
 				def boards = [backBoard]
-				if(linkIndex==2) {
+				//if(linkIndex==2) {
 					boards.add(frontBoard)
-				}
+				//}
 				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
-				backBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
-				frontBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
+				backBoard.addAssemblyStep( 3, new Transform().movez(rodlen+sideBraceDistacne*2))
+				frontBoard.addAssemblyStep( 3, new Transform().movez(rodlen+sideBraceDistacne*2))
 
 				for(CSG c:boards) {
 					if(linkIndex==0) {
@@ -616,9 +648,9 @@ return new ICadGenerator(){
 				back.add(bucket)
 				back.add(bucketCleat)
 				back.add(liftCleat)
-				bucket.addAssemblyStep( 13, new Transform().movez(bucketHeightCentering*2))
-				bucketCleat.addAssemblyStep( 13, new Transform().movez(bucketHeightCentering*2))
-				bucket.addAssemblyStep(12, new Transform().movex(bucketHeightCentering*2))
+				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
+				bucketCleat.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
+				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
 				liftCleat.addAssemblyStep( 1, new Transform().movex(cleatDepth+cleatBracing))
 			}
 			@Override
