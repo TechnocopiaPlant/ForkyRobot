@@ -87,7 +87,9 @@ return new ICadGenerator(){
 				CSG rightBearing = pulleyBearingCad.rotx(-90)
 						.movey(-pulleyBearingSeperation/2)
 				CSG cutout = new Toroid(pulleyRadius, pulleyRadius+cordDiameter/2).toCSG()
+				CSG coreCutout = new Cylinder(5.75/2, pulleyWidth).toCSG()
 				CSG pulley = new Cylinder(pulleyRadius+cordDiameter/2, pulleyWidth).toCSG()
+						.difference(coreCutout)
 						.rotx(90)
 						.movey(-pulleyWidth/2)
 						.difference([
@@ -670,9 +672,19 @@ return new ICadGenerator(){
 				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
 				backBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
 				frontBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
-
 				for(CSG c:boards) {
-					c.setMfg({incoming->return incoming.roty(90).toZMin()})
+					if(c.getTotalX()-0.1<boardThickness)
+						if(c.getMaxX()>0)
+							c.setMfg({incoming->return incoming.roty(-90).toZMin()})
+						else
+							c.setMfg({incoming->return incoming.roty(90).toZMin()})
+							
+					if(c.getTotalY()-0.1<boardThickness)
+						if(c.getMaxY()>0)
+							c.setMfg({incoming->return incoming.rotx(90).toZMin()})
+						else
+							c.setMfg({incoming->return incoming.rotx(-90).toZMin()})
+							
 					c.setManipulator(frameListener)
 					c.setColor(Color.web("#EDCAA1"))
 					c.addExportFormat("svg")
