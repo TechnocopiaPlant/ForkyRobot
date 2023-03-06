@@ -282,8 +282,8 @@ return new ICadGenerator(){
 					else
 						rod.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 
-					upperBearing.addAssemblyStep( 2+stepOffset, new Transform().movez(bearingHeight+5))
-					lowerBearing.addAssemblyStep( 2+stepOffset, new Transform().movez(-(bracing+5)))
+					upperBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(bearingHeight+5))
+					lowerBearing.addAssemblyStep( 3+stepOffset, new Transform().movez(-(bracing+5)))
 					if(linkIndex!=2) {
 						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
 						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
@@ -469,7 +469,7 @@ return new ICadGenerator(){
 					topBlock=topBlock.union(bb.get("add"))
 					if(linkIndex!=2)
 						topBlock=topBlock
-								.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2))
+								.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2+sideBraceDistacne/2-bracing))
 								.difference(backBoard)
 					vitamins.addAll(bb.get("vitamins"))
 					back.addAll(bb.get("vitamins"))
@@ -547,8 +547,8 @@ return new ICadGenerator(){
 					boards.add(frontBoard)
 				//}
 				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
-				backBoard.addAssemblyStep( 3, new Transform().movez(rodlen+sideBraceDistacne*2))
-				frontBoard.addAssemblyStep( 3, new Transform().movez(rodlen+sideBraceDistacne*2))
+				backBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+				frontBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
 
 				for(CSG c:boards) {
 					if(linkIndex==0) {
@@ -563,6 +563,9 @@ return new ICadGenerator(){
 				topBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
 				bottomBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
 				bottomBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
+				bottomBlock.addAssemblyStep( 2, new Transform().movex(100).rotY(30*(linkIndex+1)))
+				topBlock.addAssemblyStep( 2, new Transform().movez(-100.0*(linkIndex+1)))
+				
 				//				for(CSG c:clearenceParts) {
 				//					if(linkIndex==0) {
 				//						c.setManipulator(kin.getRootListener())
@@ -651,7 +654,7 @@ return new ICadGenerator(){
 				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucketCleat.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
-				liftCleat.addAssemblyStep( 1, new Transform().movex(cleatDepth+cleatBracing))
+				liftCleat.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
