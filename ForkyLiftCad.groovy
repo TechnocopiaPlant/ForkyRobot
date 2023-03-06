@@ -207,7 +207,7 @@ return new ICadGenerator(){
 				double ZFrontCutout = rodlen-rodEmbedlen*2
 				double boardZTotal =rodlen+sideBraceDistacne*2
 				double zDisplacement=0
-				
+
 				if(linkIndex!=2) {
 					frontCutoutWidth = cutoutWidth
 					ZFrontCutout=boardZTotal
@@ -337,7 +337,7 @@ return new ICadGenerator(){
 						.toZMin()
 						.movez(-supportPulleyRad*2)
 						.movez(-sideBraceDistacne)
-				
+
 
 				CSG topBlock=topBottomBlock
 						.union(BackBrace.rotx(180).movez(braceBasez))
@@ -544,7 +544,7 @@ return new ICadGenerator(){
 				}
 				def boards = [backBoard]
 				//if(linkIndex==2) {
-					boards.add(frontBoard)
+				boards.add(frontBoard)
 				//}
 				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
 				backBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
@@ -560,12 +560,14 @@ return new ICadGenerator(){
 					c.addExportFormat("svg")
 					back.add(c)
 				}
+				Transform bottomSwing =  new Transform().movex(100).rotY(30*(linkIndex+1))
+				Transform topSplay = new Transform().movez(-100.0*(linkIndex+1))
 				topBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
 				bottomBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
 				bottomBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
-				bottomBlock.addAssemblyStep( 2, new Transform().movex(100).rotY(30*(linkIndex+1)))
-				topBlock.addAssemblyStep( 2, new Transform().movez(-100.0*(linkIndex+1)))
-				
+				bottomBlock.addAssemblyStep( 2, bottomSwing)
+				topBlock.addAssemblyStep( 2, topSplay )
+
 				//				for(CSG c:clearenceParts) {
 				//					if(linkIndex==0) {
 				//						c.setManipulator(kin.getRootListener())
@@ -625,12 +627,22 @@ return new ICadGenerator(){
 
 
 				TransformNR step = new TransformNR(kin.getDhLink(linkIndex).DhStep(0)).inverse()
-				Transform pulleyLocation =  com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step).apply(new Transform().rotZ(90))
-						.movey(-distanceBoltToPulleyOutput)
+				Transform pulleyLocation =  com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step).apply(new Transform().rotZ(-90))
+						.movey(distanceBoltToPulleyOutput)
 
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(pulleyLocation,true)
 				liftCleat=liftCleat.difference(bb.get("cut"))
-				CSG pulley = bb.get("vitamins").remove(0)
+				def vits = bb.get("vitamins")
+
+				CSG pulley = vits.remove(0)
+				for(CSG c:vits) {
+					c.setColor(Color.SILVER)
+					c.setMfg({incoming->return null})
+				}
+				def leftBearing=vits.get(0)
+				def rightBearing=vits.get(1)
+				def bolt=vits.get(2)
+				def nutForPulley=vits.get(3)
 				back.add(pulley)
 				liftCleat=liftCleat.union(bb.get("add"))
 				//bb.get("vitamins").addAll(bb.get("cut"))
@@ -640,7 +652,23 @@ return new ICadGenerator(){
 					c.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				}
 
-
+				Transform boltSidePull =  new Transform().movex(-30)
+				Transform nutSidePull = new Transform().movex(20)
+				bolt.addAssemblyStep( 5, boltSidePull)
+				nutForPulley.addAssemblyStep( 6, nutSidePull)
+				leftBearing.addAssemblyStep( 3, boltSidePull)
+				rightBearing.addAssemblyStep( 3, nutSidePull)
+				Transform pulleyBearingSubAssembly = new Transform().movez(-100)
+				pulley.addAssemblyStep( 4, pulleyBearingSubAssembly)
+				leftBearing.addAssemblyStep( 4, pulleyBearingSubAssembly)
+				rightBearing.addAssemblyStep( 4, pulleyBearingSubAssembly)
+				
+				pulley.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
+				leftBearing.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
+				rightBearing.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
+				bolt.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
+				nutForPulley.addAssemblyStep( 2, new Transform().movex(cleatDepth+cleatBracing))
+				
 				bucketCleat.setColor(Color.BLUE)
 				bucketCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				bucket.setColor(Color.WHITE)
