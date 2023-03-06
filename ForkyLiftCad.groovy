@@ -19,6 +19,7 @@ def pulleyBearingSize = "695zz"
 CSG pulleyBearingCad = Vitamins.get("ballBearing", pulleyBearingSize).hull()
 CSG nut = Vitamins.get("lockNut", "M5")
 CSG boltPulley = Vitamins.get("capScrew", "M5x25")
+CSG vitamin_heatedThreadedInsert_M5 = Vitamins.get("heatedThreadedInsert", "M5")
 
 return new ICadGenerator(){
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
