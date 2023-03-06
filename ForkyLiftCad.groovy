@@ -32,8 +32,8 @@ return new ICadGenerator(){
 			double rodlen = 500
 			double rodEmbedlen =10
 
-			
-			
+
+
 			double boardThickness=6.3
 			double boxClearence = 10
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
@@ -55,12 +55,12 @@ return new ICadGenerator(){
 			double supportPulleyRad=pulleyRadius+cordDiameter+pulleyClearenceDistance
 			double TotalPulleyCordToCord= distanceBoltToPulleyOutput*2
 			double xyOfPulleyDistance = TotalPulleyCordToCord/Math.sqrt(2)
-			
+
 			double linkOneWidth = TotalPulleyCordToCord+4*xyOfPulleyDistance
 			double linkTwoWidth = linkOneWidth+4*xyOfPulleyDistance
 			double lineThreeWidth = linkTwoWidth+4*xyOfPulleyDistance
 			double calculatedTotalWidth = lineThreeWidth/2;
-			
+
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
@@ -127,11 +127,11 @@ return new ICadGenerator(){
 				vitamins.add(bolt)
 				vitamins.add(nutForPulley)
 				toCut.add(pulleyClearenceShape)
-								double coneStartOffset=10
+				double coneStartOffset=10
 				CSG cordPart =  Parabola.cone(cordDiameter*6, rodlen+coneStartOffset)
-								.toZMax()
-								.movez(coneStartOffset)
-								
+						.toZMax()
+						.movez(coneStartOffset)
+
 				CSG cord = cordPart.union(cordPart.rotx(180))
 				if(useStraitPlugs)
 					cord = new Cylinder(cordDiameter/2+(pulleyClearenceDistance+4), rodlen*4).toCSG()
@@ -212,6 +212,8 @@ return new ICadGenerator(){
 				int stepOffset = 0;
 				def clearenceParts=[]
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
+				Transform blockXAssembly =new Transform().movex(rodToBoardDistance*(3))
+				Transform blocZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
 				for(double i=-rodSeperationTotal;i<rodSeperationTotal+1;i+=(rodSeperationTotal*2)) {
 					def braceInsetDistanceArg1 = stageInset
 					def lastBraceDist=lastStageInset
@@ -266,7 +268,19 @@ return new ICadGenerator(){
 
 					upperBearing.addAssemblyStep( 2+stepOffset, new Transform().movez(bearingHeight+5))
 					lowerBearing.addAssemblyStep( 2+stepOffset, new Transform().movez(-(bracing+5)))
-					rod.addAssemblyStep( 7+stepOffset, new Transform().movez(-rodlen-braceInsetDistance-bracing))
+					if(linkIndex!=2) {
+						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
+						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+
+						lowerBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
+						lowerBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					}
+					rod.addAssemblyStep( 8+stepOffset, blockXAssembly)
+					rod.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					if(linkIndex==2)
+						rod.addAssemblyStep( 7+stepOffset, new Transform().movez(2*rodEmbedlen))
+					else
+						rod.addAssemblyStep( 7+stepOffset, new Transform().movez(rodlen+rodEmbedlen))
 				}
 
 				double shaftHolderY=boardWidth
@@ -318,10 +332,10 @@ return new ICadGenerator(){
 							).toCSG()
 							.movez(rodEmbedlen)
 					supportBlock=supportBlock
-								.union(
-									supportBlock
-										.movex(-(depthOcCSection + boardThickness+boxClearence)*Math.sqrt(2))
-									).hull()		
+							.union(
+							supportBlock
+							.movex(-(depthOcCSection + boardThickness+boxClearence)*Math.sqrt(2))
+							).hull()
 					bearingInCShape = supportBlock.rotz(-45).movey(calculatedTotalWidth-lastStageInset-bearingLocationOffset)
 							.union(supportBlock.rotz(45).movey(-calculatedTotalWidth+lastStageInset+bearingLocationOffset))
 				}
@@ -329,7 +343,7 @@ return new ICadGenerator(){
 					bearingInCShape=bearingInCShape.difference(clearenceParts)
 					bottomBlock=bottomBlock.union(bearingInCShape)
 				}
-				
+
 				Transform bottomLeft = new Transform()
 						.rotZ(-45)
 						.movez(-4-sideBraceDistacne)
@@ -338,11 +352,16 @@ return new ICadGenerator(){
 						.rotZ(45)
 						.movez(-4-sideBraceDistacne)
 						.movey(-pulleyLocationBottom)
-
+				Transform topVitaminsMove=new Transform().movez(bearingHeight+5)
 				for(Transform tf:[bottomLeft, bottomRight]) {
 					if(linkIndex!=0) {
 						HashMap<String,ArrayList<CSG>> bb =pulleyGen(tf)
-						CSG pulley = bb.get("vitamins").remove(0)
+						def vits = bb.get("vitamins")
+						CSG pulley = vits.remove(0)
+						def leftBearing=vits.get(0)
+						def rightBearing=vits.get(1)
+						def bolt=vits.get(2)
+						def nutForPulley=vits.get(3)
 						back.add(pulley)
 						def cuts = bb.get("cut")
 						bottomBlock=bottomBlock.difference(cuts)
@@ -356,19 +375,44 @@ return new ICadGenerator(){
 						}else {
 							pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 						}
+						pulley.addAssemblyStep( 8+stepOffset, blockXAssembly)
+						pulley.addAssemblyStep( 9+stepOffset, blocZAssembly)
 						for(CSG c:bb.get("vitamins")) {
 							if(linkIndex==0) {
 								c.setManipulator(kin.getRootListener())
 							}else {
 								c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 							}
+							c.addAssemblyStep( 8+stepOffset, blockXAssembly)
+							c.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						}
+						Transform pulleyBearingSubAssembly = new Transform().movez(-100)
+						pulley.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
+						leftBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
+						rightBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
+						
+						if(tf==bottomLeft) {
+							Transform boltSidePull =  new Transform().movey(25).movex(-25)
+							Transform nutSidePull = new Transform().movey(-25).movex(25)
+							bolt.addAssemblyStep( 13+stepOffset, boltSidePull)
+							nutForPulley.addAssemblyStep( 14+stepOffset, nutSidePull)
+							leftBearing.addAssemblyStep( 11+stepOffset, boltSidePull)
+							rightBearing.addAssemblyStep( 11+stepOffset, nutSidePull)
+						}else {
+							Transform boltSidePull =  new Transform().movey(25).movex(25)
+							Transform nutSidePull = new Transform().movey(-25).movex(-25)
+							bolt.addAssemblyStep( 13+stepOffset, boltSidePull)
+							nutForPulley.addAssemblyStep( 14+stepOffset, nutSidePull)
+							leftBearing.addAssemblyStep( 11+stepOffset, boltSidePull)
+							rightBearing.addAssemblyStep( 11+stepOffset, nutSidePull)
+							
 						}
 					}
-						bottomBlock=bottomBlock
-								.difference(topBottomBlockCutout.movez(-sideBraceDistacne))
-								.difference(backBoard)
-								
-					
+					bottomBlock=bottomBlock
+							.difference(topBottomBlockCutout.movez(-sideBraceDistacne))
+							.difference(backBoard)
+
+
 				}
 				Transform topLeft = new Transform()
 						.rotZ(45)
@@ -383,7 +427,12 @@ return new ICadGenerator(){
 					HashMap<String,ArrayList<CSG>> bb =pulleyGen(tf)
 					topBlock=topBlock.difference(bb.get("cut"))
 					bottomBlock=bottomBlock.difference(bb.get("cut"))
-					CSG pulley = bb.get("vitamins").remove(0)
+					def vits = bb.get("vitamins")
+					CSG pulley = vits.remove(0)
+					def leftBearing=vits.get(0)
+					def rightBearing=vits.get(1)
+					def bolt=vits.get(2)
+					def nutForPulley=vits.get(3)
 					back.add(pulley)
 					topBlock=topBlock.union(bb.get("add"))
 					if(linkIndex!=2)
@@ -397,12 +446,35 @@ return new ICadGenerator(){
 					}else {
 						pulley.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 					}
+					pulley.addAssemblyStep( 8+stepOffset, topVitaminsMove)
 					for(CSG c:bb.get("vitamins")) {
 						if(linkIndex==0) {
 							c.setManipulator(kin.getRootListener())
 						}else {
 							c.setManipulator(kin.getLinkObjectManipulator(linkIndex-1))
 						}
+						c.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+					}
+					Transform pulleyBearingSubAssembly = new Transform().movez(100)
+					pulley.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
+					leftBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
+					rightBearing.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
+					
+					if(tf==topRight) {
+						Transform boltSidePull =  new Transform().movey(25).movex(-25)
+						Transform nutSidePull = new Transform().movey(-25).movex(25)
+						bolt.addAssemblyStep( 13+stepOffset, boltSidePull)
+						nutForPulley.addAssemblyStep( 14+stepOffset, nutSidePull)
+						leftBearing.addAssemblyStep( 11+stepOffset, boltSidePull)
+						rightBearing.addAssemblyStep( 11+stepOffset, nutSidePull)
+					}else {
+						Transform boltSidePull =  new Transform().movey(25).movex(25)
+						Transform nutSidePull = new Transform().movey(-25).movex(-25)
+						bolt.addAssemblyStep( 13+stepOffset, boltSidePull)
+						nutForPulley.addAssemblyStep( 14+stepOffset, nutSidePull)
+						leftBearing.addAssemblyStep( 11+stepOffset, boltSidePull)
+						rightBearing.addAssemblyStep( 11+stepOffset, nutSidePull)
+						
 					}
 				}
 
@@ -442,7 +514,7 @@ return new ICadGenerator(){
 				if(linkIndex==2) {
 					boards.add(frontBoard)
 				}
-				frontBoard.addAssemblyStep( 4, new Transform().movex(braceHeight))
+				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
 				backBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
 				frontBoard.addAssemblyStep( 3, new Transform().movey(boardWidth*2))
 
@@ -456,9 +528,9 @@ return new ICadGenerator(){
 					c.addExportFormat("svg")
 					back.add(c)
 				}
-				topBlock.addAssemblyStep( 8+stepOffset, new Transform().movez(bearingHeight+5))
-				bottomBlock.addAssemblyStep( 8+stepOffset, new Transform().movex(rodToBoardDistance*(3+stepIndex*2)))
-				bottomBlock.addAssemblyStep( 9+stepOffset, new Transform().movez(-bearingHeight*(3*stepIndex +1)-5))
+				topBlock.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+				bottomBlock.addAssemblyStep( 8+stepOffset, blockXAssembly)
+				bottomBlock.addAssemblyStep( 9+stepOffset, blocZAssembly)
 				//				for(CSG c:clearenceParts) {
 				//					if(linkIndex==0) {
 				//						c.setManipulator(kin.getRootListener())
@@ -544,9 +616,9 @@ return new ICadGenerator(){
 				back.add(bucket)
 				back.add(bucketCleat)
 				back.add(liftCleat)
-				bucket.addAssemblyStep( 10, new Transform().movez(bucketHeightCentering*2))
-				bucketCleat.addAssemblyStep( 10, new Transform().movez(bucketHeightCentering*2))
-				bucket.addAssemblyStep(9, new Transform().movex(bucketHeightCentering*2))
+				bucket.addAssemblyStep( 13, new Transform().movez(bucketHeightCentering*2))
+				bucketCleat.addAssemblyStep( 13, new Transform().movez(bucketHeightCentering*2))
+				bucket.addAssemblyStep(12, new Transform().movex(bucketHeightCentering*2))
 				liftCleat.addAssemblyStep( 1, new Transform().movex(cleatDepth+cleatBracing))
 			}
 			@Override
