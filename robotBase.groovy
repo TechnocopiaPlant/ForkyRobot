@@ -11,19 +11,37 @@ import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
 import javafx.scene.paint.Color
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
+
+import java.lang.reflect.Type;
+
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 println "Loading 200x robot"
 def mm(def inches){
 	return inches*25.4
 }
 int depth=1
-double gridUnits = 25
-def wheelbaseIndex = 9
-def wheelbaseIndexY = 9
-def rideHeight = 80
-def plateThickness =mm(1.0/4.0)
-def plateLevel = rideHeight+plateThickness
 
+Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
+Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+File	cachejson = ScriptingEngine.fileFromGit("https://github.com/TechnocopiaPlant/ForkyRobot.git", "baseDim.json")
+def inPut = FileUtils.openInputStream(cachejson);
+def jsonString = IOUtils.toString(inPut);
+HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
+
+double gridUnits = database.baseBad
+def wheelbaseIndex = database.wheelbaseIndex
+def wheelbaseIndexY = database.wheelbaseIndexY
+def rideHeight = database.rideHeight
+def plateThickness =database.plateThickness
+double electronicsBayStandoff = database.electronicsBayStandoff
+def plateLevel = rideHeight+plateThickness
 def wheelbase=gridUnits*wheelbaseIndex
+
 CSGDatabase.clear()
 LengthParameter printerOffset 			= new LengthParameter("printerOffset",0.5,[1.2,0])
 printerOffset.setMM(0.25)
@@ -35,7 +53,7 @@ def nutsert=new Cylinder(nutsertRad,nursertHeight ).toCSG()
 
 double standOffRadius = nutsertRad*3
 double motorStandoffBoltLen = 45
-double electronicsBayStandoff = 45
+
 
 double sensorWidth = mm(2.95)
 double sensorthickness = mm( 0.1)

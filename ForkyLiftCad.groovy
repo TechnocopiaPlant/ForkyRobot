@@ -6,6 +6,15 @@ import com.neuronrobotics.sdk.addons.kinematics.DHParameterKinematics
 import com.neuronrobotics.sdk.addons.kinematics.MobileBase
 import com.neuronrobotics.sdk.addons.kinematics.math.RotationNR
 import com.neuronrobotics.sdk.addons.kinematics.math.TransformNR
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
+
+import java.lang.reflect.Type;
+
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 
 import eu.mihosoft.vrl.v3d.CSG
 import eu.mihosoft.vrl.v3d.Cube
@@ -24,6 +33,8 @@ CSG boltPulley = Vitamins.get("capScrew", "M5x25")
 CSG insert = Vitamins.get("heatedThreadedInsert", "M5")
 
 return new ICadGenerator(){
+
+		static final String HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT = "https://github.com/TechnocopiaPlant/ForkyRobot.git"
 			Transform liftCleatAssembly  =new Transform().movex(50)
 			double maxPrinterDimention = 195
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
@@ -818,21 +829,42 @@ return new ICadGenerator(){
 				bucketCleat.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
 				liftCleat.addAssemblyStep( 2, liftCleatAssembly)
+				
+				Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
+				Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+				File	cachejson = ScriptingEngine.fileFromGit(HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT, "baseDim.json")
+				def inPut = FileUtils.openInputStream(cachejson);
+				def jsonString = IOUtils.toString(inPut);
+				HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
+
+				double gridUnits = database.baseBad
+				def wheelbaseIndex = database.wheelbaseIndex
+				def wheelbaseIndexY = database.wheelbaseIndexY
+				def rideHeight = database.rideHeight
+				def plateThickness =database.plateThickness
+				def plateLevel = rideHeight+plateThickness
+				def wheelbase=gridUnits*wheelbaseIndex
+				double electronicsBayStandoff = database.electronicsBayStandoff
+				
+				kin.setRobotToFiducialTransform(new TransformNR(wheelbase/2, 
+					cleatPlacement+bucketTopDiam/2, 
+					-bucket.getMinZ()+plateLevel+electronicsBayStandoff+plateThickness, new RotationNR(0,-90,0)))
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
+
 				// TODO Auto-generated method stub
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
 				//back.addAll(bb.get("add"))
 				//back.addAll(bb.get("cut"))
 				//back.addAll(bb.get("vitamins"))
-				back.add(new Cube(1).toCSG())
-				for(CSG c:back) {
-					c.setManipulator(arg0.getRootListener())
-					c.setMfg({inc->return null})
-				}
-
+//				back.add(new Cube(1).toCSG())
+//				for(CSG c:back) {
+//					c.setManipulator(arg0.getRootListener())
+//					c.setMfg({inc->return null})
+//				}
+				back.addAll(ScriptingEngine.gitScriptRun(HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT, "robotBase.groovy"))
 				return back;
 			}
 
