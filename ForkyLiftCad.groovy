@@ -34,7 +34,7 @@ CSG insert = Vitamins.get("heatedThreadedInsert", "M5")
 
 return new ICadGenerator(){
 
-		static final String HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT = "https://github.com/TechnocopiaPlant/ForkyRobot.git"
+		    String HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT = "https://github.com/TechnocopiaPlant/ForkyRobot.git"
 			Transform liftCleatAssembly  =new Transform().movex(50)
 			double maxPrinterDimention = 195
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
@@ -77,6 +77,9 @@ return new ICadGenerator(){
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
+			
+
+			
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
@@ -836,7 +839,7 @@ return new ICadGenerator(){
 				def inPut = FileUtils.openInputStream(cachejson);
 				def jsonString = IOUtils.toString(inPut);
 				HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
-
+	
 				double gridUnits = database.baseBad
 				def wheelbaseIndex = database.wheelbaseIndex
 				def wheelbaseIndexY = database.wheelbaseIndexY
@@ -852,7 +855,21 @@ return new ICadGenerator(){
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
-
+				Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
+				Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+				File	cachejson = ScriptingEngine.fileFromGit(HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT, "baseDim.json")
+				def inPut = FileUtils.openInputStream(cachejson);
+				def jsonString = IOUtils.toString(inPut);
+				HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
+	
+				double gridUnits = database.baseBad
+				def wheelbaseIndex = database.wheelbaseIndex
+				def wheelbaseIndexY = database.wheelbaseIndexY
+				def rideHeight = database.rideHeight
+				def plateThickness =database.plateThickness
+				def plateLevel = rideHeight+plateThickness
+				def wheelbase=gridUnits*wheelbaseIndex
+				double electronicsBayStandoff = database.electronicsBayStandoff
 				// TODO Auto-generated method stub
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
@@ -864,9 +881,13 @@ return new ICadGenerator(){
 //					c.setManipulator(arg0.getRootListener())
 //					c.setMfg({inc->return null})
 //				}
-				back.addAll(ScriptingEngine.gitScriptRun(
+				def baseParts=ScriptingEngine.gitScriptRun(
 					HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT,
-					 "robotBase.groovy",null))
+					 "robotBase.groovy",null)
+				for(CSG c:baseParts) {
+					c.addAssemblyStep(15, new Transform().movex(-wheelbase*1.3))
+				}
+				back.addAll(baseParts)
 				return back;
 			}
 
