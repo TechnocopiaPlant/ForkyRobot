@@ -201,13 +201,13 @@
 </ZframeToRAS>
 
 <baseToZframe>
-	<x>0.0</x>
-	<y>0.0</y>
-	<z>186.10000000000002</z>
-	<rotw>1.0</rotw>
+	<x>237.5</x>
+	<y>251.45</y>
+	<z>323.80000000000007</z>
+	<rotw>0.7071067811865476</rotw>
 	<rotx>-0.0</rotx>
 	<roty>-0.0</roty>
-	<rotz>-0.0</rotz>
+	<rotz>-0.7071067811865475</rotz>
 </baseToZframe>
 
 </appendage>
