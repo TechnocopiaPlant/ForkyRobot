@@ -861,7 +861,20 @@ shortsensorPlate,
 shortsensorStandOff
 
 ]
-return parts
+
+void flatten(ArrayList<CSG> flat,List<Object> incoming) {
+	for(Object o:incoming) {
+		if(List.class.isInstance(o)) {
+			flatten(flat,o)
+		}
+		if(CSG.class.isInstance(o)) {
+			flat.add(o)
+		}
+	}
+}
+def flat=[]
+flatten(flat,parts)
+return flat
 
 def toProject =[bracket,wheelAsmb,tire,plate]
 def toProjectF =[bracket,bracketm,wheelAsmb,wheelAsmbl,tire,plate,tirel]
