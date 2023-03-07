@@ -173,7 +173,6 @@ return new ICadGenerator(){
 			@Override
 			public ArrayList<CSG> generateCad(DHParameterKinematics kin, int linkIndex) {
 				println bearingType
-				// TODO Auto-generated method stub
 				ArrayList<CSG> back =[]
 				int stepIndex = kin.getNumberOfLinks()-linkIndex-1
 
