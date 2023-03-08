@@ -4,5 +4,6 @@
 "wheelbaseIndexY":19,
 "rideHeight": 80,
 "plateThickness":6.35,
-"electronicsBayStandoff":45
+"electronicsBayStandoff":45,
+"cleatDepth":25
 }

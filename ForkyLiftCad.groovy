@@ -40,21 +40,21 @@ def inPut = FileUtils.openInputStream(cachejson);
 def jsonString = IOUtils.toString(inPut);
 HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
 
-double gridUnits = database.baseBad
-def wheelbaseIndex = database.wheelbaseIndex
-def wheelbaseIndexY = database.wheelbaseIndexY
-def rideHeight = database.rideHeight
-def plateThickness =database.plateThickness
-def plateLevel = rideHeight+plateThickness
-def wheelbase=gridUnits*wheelbaseIndex
-double electronicsBayStandoff = database.electronicsBayStandoff
+
 
 return new ICadGenerator(){
 
-
-
 			Transform liftCleatAssembly  =new Transform().movex(50)
-
+			double gridUnits = database.baseBad
+			def wheelbaseIndex = database.wheelbaseIndex
+			def wheelbaseIndexY = database.wheelbaseIndexY
+			def rideHeight = database.rideHeight
+			def plateThickness =database.plateThickness
+			def plateLevel = rideHeight+plateThickness
+			def wheelbase=gridUnits*wheelbaseIndex
+			double electronicsBayStandoff = database.electronicsBayStandoff
+			double cleatDepthVal = database.cleatDepth
+			
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			def pulleyBearingConfig = Vitamins.getConfiguration("ballBearing", pulleyBearingSize)
 			double bearingThickness = pulleyBearingConfig.width
@@ -83,6 +83,7 @@ return new ICadGenerator(){
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
 			double pulleyClearenceDistance=1
+			double cleatBracingDepthDH=101.0
 
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
 			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
@@ -103,6 +104,12 @@ return new ICadGenerator(){
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = cleatPlacement+bucketTopDiam*2.0/3.0
 			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-boxClearence-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
+			double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
+			
+			double connectionSection= cleatBracingDepthDH-boardThickness*2-boxClearence*2
+			double cleatHeight = cleatBracing+cleatDepthVal
+			double kinematicsToBottomOfBucket = bucketHeight-(lipHeight+cleatHeight*2+bucketHeightCentering)
+			double zHeightOfLiftKinematics = kinematicsToBottomOfBucket+plateLevel+electronicsBayStandoff+plateThickness
 
 
 			CSG moveDHValues(CSG incoming,DHLink dh ){
@@ -216,13 +223,12 @@ return new ICadGenerator(){
 				double pulleyLocation=(calculatedTotalWidth-stageInset-xyOfPulleyDistance*2)
 				double pulleyLocationBottom=pulleyLocation+2*xyOfPulleyDistance//(shaftHolderY/2 -cordDiameter-pulleyClearenceDistance*2)
 				double bearingBlockWidth =( pulleyLocation+xyOfPulleyDistance/2)*2
-				double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
 				if(linkIndex!=2) {
-					kin.setDH_R(linkIndex, bracingBetweenStages)
-				}else {
-					bracingBetweenStages = kin.getDH_R(linkIndex)
-				}
-				double connectionSection= bracingBetweenStages-boardThickness*2-boxClearence*2
+					kin.setDH_R(linkIndex, 0)
+				}else
+					kin.setDH_R(linkIndex, cleatBracingDepthDH)
+				bracingBetweenStages = kin.getDH_R(linkIndex)
+				
 				println "Board distance  "+linkIndex+" is "+boardWidth
 				CSG bearingInCShape
 				if(linkIndex==2) {
@@ -567,7 +573,7 @@ return new ICadGenerator(){
 							.difference(vitamins)
 							.difference(clearenceParts)
 
-					makeLink2( back,    bearingBlcokBearingSection,bearingBlock, kin,  linkIndex);
+					makeLink2( back,    bearingBlock, kin,  linkIndex);
 				}
 
 				def braceBlocks = []
@@ -762,13 +768,12 @@ return new ICadGenerator(){
 				back.add(bearingBlock)
 				bearingBlock.addAssemblyStep( 1, new Transform().movex(-bearingBlcokBearingSection))
 			}
-			private void makeLink2(ArrayList<CSG> back, double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
+			private void makeLink2(ArrayList<CSG> back,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
 				double cleatWidth = connectingBlockWidth
 
 				CSG cleat = ((CSG)ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth, cleatBracing]))
 				.movey(-cleatWidth/2)
 				double cleatDepth = cleat.getTotalX()
-				double cleatHeight = cleat.getTotalZ()
 
 				kin.setDH_R(linkIndex, cleatPlacement)
 
@@ -781,8 +786,9 @@ return new ICadGenerator(){
 				CSG bucket = new Cylinder(bucketBottomDiam/2,bucketTopDiam/2,bucketHeight,(int)30).toCSG()
 						.toZMax()
 						.union(bucketRim)
+						.toZMin()
 						.toXMin()
-						.movez(lipHeight+cleatHeight*2+bucketHeightCentering)
+						.movez(-kinematicsToBottomOfBucket)
 
 
 				CSG bucketCleat=cleat.rotz(180)
@@ -858,12 +864,14 @@ return new ICadGenerator(){
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
 				liftCleat.addAssemblyStep( 2, liftCleatAssembly)
 
-				kin.setRobotToFiducialTransform(new TransformNR(wheelbase/2,
-						CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
-						-bucket.getMinZ()+plateLevel+electronicsBayStandoff+plateThickness, new RotationNR(0,-90,0)))
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
+				
+				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(new TransformNR(wheelbase/2,
+						CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
+						zHeightOfLiftKinematics
+						, new RotationNR(0,-90,0)))
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
 				//back.addAll(bb.get("add"))
