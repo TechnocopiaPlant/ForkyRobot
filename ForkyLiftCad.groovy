@@ -32,48 +32,70 @@ CSG nut = Vitamins.get("lockNut", "M5")
 CSG boltPulley = Vitamins.get("capScrew", "M5x25")
 CSG insert = Vitamins.get("heatedThreadedInsert", "M5")
 
+String HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT = "https://github.com/TechnocopiaPlant/ForkyRobot.git"
+Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
+Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+File	cachejson = ScriptingEngine.fileFromGit(HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT, "baseDim.json")
+def inPut = FileUtils.openInputStream(cachejson);
+def jsonString = IOUtils.toString(inPut);
+HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
+
+double gridUnits = database.baseBad
+def wheelbaseIndex = database.wheelbaseIndex
+def wheelbaseIndexY = database.wheelbaseIndexY
+def rideHeight = database.rideHeight
+def plateThickness =database.plateThickness
+def plateLevel = rideHeight+plateThickness
+def wheelbase=gridUnits*wheelbaseIndex
+double electronicsBayStandoff = database.electronicsBayStandoff
+
 return new ICadGenerator(){
 
-		    String HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT = "https://github.com/TechnocopiaPlant/ForkyRobot.git"
 			Transform liftCleatAssembly  =new Transform().movex(50)
-			double maxPrinterDimention = 195
+
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			def pulleyBearingConfig = Vitamins.getConfiguration("ballBearing", pulleyBearingSize)
 			double bearingThickness = pulleyBearingConfig.width
 			double rodDiam =bearingType.innerDiameter
 			double bearingDiam = bearingType.outerDiameter
 			double bearingHeight = bearingType.length
-			double bearingPlasticSurround = 5
+
 			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize).hull()
+			
+			
+			double bearingPlasticSurround = 5
+			double maxPrinterDimention = 195
 			double rodlen = 500
 			double rodEmbedlen =10
 			double boardThickness=6.3
 			double boxClearence = 10
-			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
-			double frontCutoutDistance = rodEmbedlen
-			double bearingBlockX = rodToBoardDistance-boxClearence*2
+			double cleatBracing=20
+			double bucketHeightCentering=60
 			double braceHeight = 100
 			double bucketTopDiam = 299.7
 			double bucketBottomDiam=260.0
 			double bucketHeight = 442.8
 			double lipHeight=106.7
-			double bracingBetweenStages = 0;//rodToBoardDistance*2+boardThickness*2+boxClearence
-			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2
+			double bracingBetweenStages = 0;
 			double cordDiameter = 6
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
 			double pulleyClearenceDistance=1
+			
+			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
+			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
+			double frontCutoutDistance = rodEmbedlen
+			double bearingBlockX = rodToBoardDistance-boxClearence*2
+			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
 			double supportPulleyRad=pulleyRadius+cordDiameter+pulleyClearenceDistance
 			double TotalPulleyCordToCord= distanceBoltToPulleyOutput*2
 			double xyOfPulleyDistance = TotalPulleyCordToCord/Math.sqrt(2)
-
 			double linkOneWidth = TotalPulleyCordToCord+4*xyOfPulleyDistance
 			double linkTwoWidth = linkOneWidth+4*xyOfPulleyDistance
 			double lineThreeWidth = linkTwoWidth+4*xyOfPulleyDistance
 			double calculatedTotalWidth = lineThreeWidth/2;
-
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
@@ -736,14 +758,12 @@ return new ICadGenerator(){
 			}
 			private void makeLink2(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
 				double cleatWidth = connectingBlockWidth
-				double cleatBracing=20
-				double bucketHeightCentering=60
 
 				CSG cleat = ((CSG)ScriptingEngine.gitScriptRun("https://github.com/TechnocopiaPlant/ForkyRobot.git", "cleat.groovy", [cleatWidth, cleatBracing]))
 				.movey(-cleatWidth/2)
 				double cleatDepth = cleat.getTotalX()
 				double cleatHeight = cleat.getTotalZ()
-				double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
+
 				kin.setDH_R(linkIndex, cleatPlacement)
 				
 				CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-boxClearence*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
@@ -832,44 +852,12 @@ return new ICadGenerator(){
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
 				liftCleat.addAssemblyStep( 2, liftCleatAssembly)
 				
-				Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
-				Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-				File	cachejson = ScriptingEngine.fileFromGit(HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT, "baseDim.json")
-				def inPut = FileUtils.openInputStream(cachejson);
-				def jsonString = IOUtils.toString(inPut);
-				HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
-	
-				double gridUnits = database.baseBad
-				def wheelbaseIndex = database.wheelbaseIndex
-				def wheelbaseIndexY = database.wheelbaseIndexY
-				def rideHeight = database.rideHeight
-				def plateThickness =database.plateThickness
-				def plateLevel = rideHeight+plateThickness
-				def wheelbase=gridUnits*wheelbaseIndex
-				double electronicsBayStandoff = database.electronicsBayStandoff
-				
 				kin.setRobotToFiducialTransform(new TransformNR(wheelbase/2, 
-					cleatPlacement+bucketTopDiam/2, 
+					cleatPlacement+bucketTopDiam*2.0/3.0, 
 					-bucket.getMinZ()+plateLevel+electronicsBayStandoff+plateThickness, new RotationNR(0,-90,0)))
 			}
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
-				Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
-				Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-				File	cachejson = ScriptingEngine.fileFromGit(HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT, "baseDim.json")
-				def inPut = FileUtils.openInputStream(cachejson);
-				def jsonString = IOUtils.toString(inPut);
-				HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
-	
-				double gridUnits = database.baseBad
-				def wheelbaseIndex = database.wheelbaseIndex
-				def wheelbaseIndexY = database.wheelbaseIndexY
-				def rideHeight = database.rideHeight
-				def plateThickness =database.plateThickness
-				def plateLevel = rideHeight+plateThickness
-				def wheelbase=gridUnits*wheelbaseIndex
-				double electronicsBayStandoff = database.electronicsBayStandoff
-				// TODO Auto-generated method stub
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
 				//back.addAll(bb.get("add"))
