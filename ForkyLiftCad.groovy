@@ -110,7 +110,10 @@ return new ICadGenerator(){
 			double cleatHeight = cleatBracing+cleatDepthVal
 			double kinematicsToBottomOfBucket = bucketHeight-(lipHeight+cleatHeight*2+bucketHeightCentering)
 			double zHeightOfLiftKinematics = kinematicsToBottomOfBucket+plateLevel+electronicsBayStandoff+plateThickness
-
+			TransformNR baseOfArmFromCenter = new TransformNR(wheelbase/2,
+				CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
+				zHeightOfLiftKinematics
+				, new RotationNR(0,-90,0))
 
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
@@ -868,10 +871,8 @@ return new ICadGenerator(){
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
 				
-				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(new TransformNR(wheelbase/2,
-						CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
-						zHeightOfLiftKinematics
-						, new RotationNR(0,-90,0)))
+				
+				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(baseOfArmFromCenter)
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
 				//back.addAll(bb.get("add"))
