@@ -102,7 +102,7 @@ return new ICadGenerator(){
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
-			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = cleatPlacement+bucketTopDiam*2.0/3.0
+			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement//-(bucketTopDiam*2.0/3.0)
 			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-boxClearence-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
 			double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
 			
@@ -113,7 +113,7 @@ return new ICadGenerator(){
 			TransformNR baseOfArmFromCenter = new TransformNR(wheelbase/2,
 				CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
 				zHeightOfLiftKinematics
-				, new RotationNR(0,-90,0))
+				, new RotationNR(0,90,0))
 
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
