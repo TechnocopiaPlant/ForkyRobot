@@ -1,4 +1,5 @@
 import com.neuronrobotics.bowlerstudio.creature.ICadGenerator
+import com.neuronrobotics.bowlerstudio.physics.TransformFactory
 import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
 import com.neuronrobotics.bowlerstudio.vitamins.Vitamins
 import com.neuronrobotics.sdk.addons.kinematics.DHLink
@@ -102,7 +103,7 @@ return new ICadGenerator(){
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
-			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement//-(bucketTopDiam*2.0/3.0)
+			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
 			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-boxClearence-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
 			double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
 			
@@ -114,7 +115,7 @@ return new ICadGenerator(){
 				CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
 				zHeightOfLiftKinematics
 				, new RotationNR(0,90,0))
-
+			Transform baseOfArmFromCentercsg =TransformFactory.nrToCSG(baseOfArmFromCenter)
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
