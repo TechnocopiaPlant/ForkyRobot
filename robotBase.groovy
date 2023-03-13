@@ -657,9 +657,9 @@ def netmoverP= new Cylinder(5.0/2,standoffHeight/2).toCSG()
 def netmoverV= new Cylinder(3/2,standoffHeight).toCSG()
 			.toZMin()
 			.movez(BottomOfPlate-10)
-for(int i=0;i<wheelbaseIndexY;i++)
+for(int i=0;i<wheelbaseIndexY+7;i++)
 	for(int j=0;j<(wheelbaseIndex+3);j++){
-		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits)
+		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits*7)
 				   .movex(gridUnits*j-gridUnits))
 }
 
@@ -696,14 +696,14 @@ CSG plateRound =new Cylinder(plateRadius,plateRadius,plateThickness,(int)60).toC
 def plateCubic = new Cube(plateRadius*2,gridUnits*(wheelbaseIndexY+2),plateThickness).toCSG()
 				.toZMin()
 				.toYMin()
-				.move(centerline,-gridUnits*1.5,BottomOfPlate)
+				.move(centerline,-gridUnits*7,BottomOfPlate)
 println "Cutting grid from plate, may take a while..."
 CSG plate =  plateRound
 				.intersect(plateCubic)
 				.difference(nutsertGridPlate)
 				.difference(battery)
 				.difference(battery2)
-plate.setColor(Color.BROWN)
+plate.setColor(Color.web("#EDCAA1"))
 
 def plate2 = plate .movez(electronicsBayStandoff+plateThickness)
 println "Plate Dimentions "+(plateRadius*2.0/25.4)+"\" by "+(plate.getTotalY()/25.4)+"\""
