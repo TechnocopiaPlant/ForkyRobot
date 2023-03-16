@@ -657,11 +657,12 @@ def netmoverP= new Cylinder(5.0/2,standoffHeight/2).toCSG()
 def netmoverV= new Cylinder(3/2,standoffHeight).toCSG()
 			.toZMin()
 			.movez(BottomOfPlate-10)
-for(int i=0;i<wheelbaseIndexY;i++)
+for(int i=0;i<wheelbaseIndexY+7;i++)
 	for(int j=0;j<(wheelbaseIndex+3);j++){
-		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits)
+		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits*6)
 				   .movex(gridUnits*j-gridUnits))
 }
+
 
 
 // 
