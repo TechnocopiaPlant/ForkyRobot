@@ -106,16 +106,18 @@ return new ICadGenerator(){
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
 			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-boxClearence-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
 			double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
-			
 			double connectionSection= cleatBracingDepthDH-boardThickness*2-boxClearence*2
 			double cleatHeight = cleatBracing+cleatDepthVal
 			double kinematicsToBottomOfBucket = bucketHeight-(lipHeight+cleatHeight*2+bucketHeightCentering)
 			double zHeightOfLiftKinematics = kinematicsToBottomOfBucket+plateLevel+electronicsBayStandoff+plateThickness
+			
 			TransformNR baseOfArmFromCenter = new TransformNR(wheelbase/2,
 				CLEAT_PLACEMENT_BUCKET_TOP_DIAM,
 				zHeightOfLiftKinematics
 				, new RotationNR(0,90,0))
 			Transform baseOfArmFromCentercsg =TransformFactory.nrToCSG(baseOfArmFromCenter)
+			
+			
 			CSG moveDHValues(CSG incoming,DHLink dh ){
 				TransformNR step = new TransformNR(dh.DhStep(0)).inverse()
 				Transform move = com.neuronrobotics.bowlerstudio.physics.TransformFactory.nrToCSG(step)
