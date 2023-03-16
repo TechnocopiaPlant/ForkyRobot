@@ -733,13 +733,26 @@ return new ICadGenerator(){
 					c.setColor(Color.SILVER)
 					c.setMfg({incoming->return null})
 				}
-				def boards = [backBoard, frontBoard]
-
-				frontBoard.addAssemblyStep( 9, new Transform().movex(braceHeight))
-				backBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
-				frontBoard.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+				def boards = [backBoard]
+				
+				if(linkIndex!=2) {
+					CSG box = frontBoard.getBoundingBox().toYMin()
+					CSG left = frontBoard.intersect(box)
+					CSG right = frontBoard.difference(box)
+					boards.addAll([left,right])
+				}else {
+					boards.add(frontBoard)
+				}
+				
 				int boardIndex=1
 				for(CSG c:boards) {
+					if(c.getMaxX()>0) {
+						c.addAssemblyStep( 9, new Transform().movex(braceHeight))
+						c.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+					}else {
+						c.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+						
+					}
 					if(c.getTotalX()-0.1<boardThickness)
 						if(c.getMaxX()>0)
 							c.setMfg({incoming->return incoming.roty(-90).toZMin()})
