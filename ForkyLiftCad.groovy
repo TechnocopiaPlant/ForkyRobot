@@ -364,6 +364,16 @@ return new ICadGenerator(){
 						.toXMax()
 						.movex(rodToBoardDistance)
 						.toZMin()
+				def SideBoards = []
+				if(linkIndex==0) {
+					CSG SideBoard = new Cube(shaftHolderX,boardThickness,boardZTotal).toCSG()
+									.toXMax()
+									.movex(rodToBoardDistance)
+									.toZMin()
+									.movez(-sideBraceDistacne)
+					SideBoards.add(SideBoard.toYMax().movey(-shaftHolderY/2))
+					SideBoards.add(SideBoard.toYMin().movey(shaftHolderY/2))
+				}
 				//if(linkIndex!=2) {
 
 				CSG topBottomBlockCutout = new Cube(
@@ -635,8 +645,15 @@ return new ICadGenerator(){
 				def nutsAndBolts=[]
 				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
-					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+1))
-					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-1))
+					double sliceTHick=0.001
+					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceTHick))
+					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceTHick))
+					boolean left = c.getMinY()>0
+					CSG side
+					if(left)
+						side = c.intersect(c.getBoundingBox().toYMin().movey(c.getMaxY()-sliceTHick))
+					else
+						side =c.intersect(c.getBoundingBox().toYMax().movey(c.getMinY()+sliceTHick))
 
 					double cornerBoltInset = 20
 					Transform upperRight = new Transform()
@@ -664,40 +681,66 @@ return new ICadGenerator(){
 							.move(frontPlate.getMaxX()+boardThickness,
 							frontPlate.getMinY()+cornerBoltInset,
 							frontPlate.getMaxZ()-cornerBoltInset)
-					def myBits=[]
-					for(Transform tf:[
+							
+					Transform sideTopBack = new Transform()
+							.move(side.getMinX()+cornerBoltInset,
+							side.getMinY(),
+							side.getMaxZ()-cornerBoltInset)
+					def boltLocations =[
 						upperRight,
 						upperLeft,
 						lowerRight,
 						lowerLeft,
 						frontLeft,
 						frontRight
-					]) {
+						]
+					if(linkIndex==0) {
+						boltLocations.add(sideTopBack)
+					}
+					def myBits=[]
+					for(Transform tf:boltLocations) {
 						double angle=90
 						double pullnut=-30
 						double pullBolt=-300
+						boolean isASide =false
+						double rotX = 0
 						if(tf.getX()>0) {
 							angle=-angle
 							pullnut=30
 							pullBolt=300
 						}
-						CSG tmp = boltPulley.roty(angle).transformed(tf)
-						CSG nutTmp = insert.movez(boardThickness).roty(-angle).transformed(tf)
-
-						nutTmp.addAssemblyStep(1, new Transform().movex(pullnut))
-						tmp.addAssemblyStep(10, new Transform().movex(pullBolt))
-						if(c.getMaxZ()<rodlen/2) {
-							nutTmp.addAssemblyStep( 8+stepOffset, blockXAssembly)
-							nutTmp.addAssemblyStep( 9+stepOffset, blocZAssembly)
-							nutTmp.addAssemblyStep( 2, bottomSwing)
-						}else{
-							nutTmp.addAssemblyStep( 8+stepOffset, topVitaminsMove)
-							nutTmp.addAssemblyStep( 2, topSplay )
+						if(tf.getY()>(shaftHolderY/2-0.1)) {
+							angle=0
+							pullnut=30
+							pullBolt=300
+							rotX=90
 						}
-						backBoard=backBoard.difference(tmp)
-						frontBoard=frontBoard.difference(tmp)
-						myBits.add(tmp)
-						myBits.add(nutTmp)
+						if(tf.getY()<(-shaftHolderY/2+0.1)) {
+							angle=0
+							pullnut=30
+							pullBolt=300
+							rotX=-90
+						}
+						CSG myBolt = boltPulley.rotx(rotX).roty(angle).transformed(tf)
+						CSG myNutt = insert.movez(boardThickness).rotx(rotX).roty((angle-180)%360).transformed(tf)
+
+						myNutt.addAssemblyStep(1, new Transform().movex(pullnut))
+						myBolt.addAssemblyStep(10, new Transform().movex(pullBolt))
+						if(c.getMaxZ()<rodlen/2) {
+							myNutt.addAssemblyStep( 8+stepOffset, blockXAssembly)
+							myNutt.addAssemblyStep( 9+stepOffset, blocZAssembly)
+							myNutt.addAssemblyStep( 2, bottomSwing)
+						}else{
+							myNutt.addAssemblyStep( 8+stepOffset, topVitaminsMove)
+							myNutt.addAssemblyStep( 2, topSplay )
+						}
+						backBoard=backBoard.difference(myBolt)
+						frontBoard=frontBoard.difference(myBolt)
+						for(int i=0;i<SideBoards.size();i++) {
+							SideBoards.set(i, SideBoards.get(i).difference(myBolt))
+						}
+						myBits.add(myBolt)
+						myBits.add(myNutt)
 					}
 					nutsAndBolts.addAll(myBits)
 					newBraceBlocks.add(c.difference(myBits))
@@ -734,7 +777,7 @@ return new ICadGenerator(){
 					c.setMfg({incoming->return null})
 				}
 				def boards = [backBoard]
-				
+				boards.addAll(SideBoards)
 				if(linkIndex!=2) {
 					CSG box = frontBoard.getBoundingBox().toYMin()
 					CSG left = frontBoard.intersect(box)
@@ -899,12 +942,12 @@ return new ICadGenerator(){
 				//					c.setManipulator(arg0.getRootListener())
 				//					c.setMfg({inc->return null})
 				//				}
-				def baseParts=ScriptingEngine.gitScriptRun(
-						HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT,
-						"robotBase.groovy",null)
-				for(CSG c:baseParts) {
-					c.addAssemblyStep(15, new Transform().movex(-wheelbase*1.3))
-				}
+//				def baseParts=ScriptingEngine.gitScriptRun(
+//						HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT,
+//						"robotBase.groovy",null)
+//				for(CSG c:baseParts) {
+//					c.addAssemblyStep(15, new Transform().movex(-wheelbase*1.3))
+//				}
 				back.addAll(baseParts)
 				return back;
 			}
