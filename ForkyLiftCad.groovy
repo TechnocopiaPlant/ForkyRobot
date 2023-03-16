@@ -977,13 +977,13 @@ return new ICadGenerator(){
 				//					c.setManipulator(arg0.getRootListener())
 				//					c.setMfg({inc->return null})
 				//				}
-//				def baseParts=ScriptingEngine.gitScriptRun(
-//						HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT,
-//						"robotBase.groovy",null)
-//				for(CSG c:baseParts) {
-//					c.addAssemblyStep(15, new Transform().movex(-wheelbase*1.3))
-//				}
-//				back.addAll(baseParts)
+				def baseParts=ScriptingEngine.gitScriptRun(
+						HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT,
+						"robotBase.groovy",null)
+				for(CSG c:baseParts) {
+					c.addAssemblyStep(15, new Transform().movex(-wheelbase*1.3))
+				}
+				back.addAll(baseParts)
 				return back;
 			}
 
