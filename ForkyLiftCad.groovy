@@ -654,11 +654,22 @@ return new ICadGenerator(){
 					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceTHick))
 					boolean left = c.getMinY()<0
 					CSG side
+					double staage = linkIndex==0?0:0
+					
+					CSG sideSlice = new Cube(c.getTotalX(),sliceTHick,c.getTotalZ()).toCSG()
+									.toXMin()
+									.toZMin()
+									.movex(c.getMinX())
+									.movez(c.getMinZ())
+					double moveAwayFromPulley =c.getMinZ()>rodlen/2?0:xyOfPulleyDistance+5
+					
 					if(!left)
-						side = c.intersect(c.getBoundingBox().toYMin().movey(c.getMaxY()-sliceTHick))
+						side = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceTHick-staage-moveAwayFromPulley))
+							.movey(moveAwayFromPulley)
 					else
-						side =c.intersect(c.getBoundingBox().toYMax().movey(c.getMinY()+sliceTHick))
-					//newBraceBlocks.addAll([backPlate,frontPlate,side])
+						side =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceTHick+staage+moveAwayFromPulley))
+							.movey(-moveAwayFromPulley)
+					newBraceBlocks.addAll([backPlate,frontPlate,side])
 					double cornerBoltInset = 22
 					Transform upperRight = new Transform()
 							.move(backPlate.getMinX(),
@@ -732,7 +743,7 @@ return new ICadGenerator(){
 							pullnut=30
 							pullBolt=300
 						}
-						if(linkIndex==0) {
+						//if(linkIndex==0) {
 							if(tf.getY()>(shaftHolderY/2-sliceTHick)) {
 								angle=180
 								pullnut=30
@@ -749,7 +760,7 @@ return new ICadGenerator(){
 								nutX=90
 								isASide=true
 							}
-						}
+						//}
 						CSG myBolt = boltPulley.movez(boardThickness).rotx(rotX).roty(angle).transformed(tf)
 						CSG myNutt = insert.rotx(nutX).roty((angle-180)%360).transformed(tf)
 						if(!isASide) {
