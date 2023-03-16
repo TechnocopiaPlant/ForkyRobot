@@ -10,17 +10,15 @@ import eu.mihosoft.vrl.v3d.parametrics.CSGDatabase
 import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
 import javafx.scene.paint.Color
-
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
-
 import java.lang.reflect.Type;
-
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-println "Loading 200x robot"
+
+println "Loading Forky Robot"
 def mm(def inches){
 	return inches*25.4
 }
