@@ -11,19 +11,37 @@ import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
 import javafx.scene.paint.Color
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
+
+import java.lang.reflect.Type;
+
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 println "Loading 200x robot"
 def mm(def inches){
 	return inches*25.4
 }
 int depth=1
-double gridUnits = 25
-def wheelbaseIndex = 9
-def wheelbaseIndexY = 9
-def rideHeight = 80
-def plateThickness =mm(1.0/4.0)
-def plateLevel = rideHeight+plateThickness
 
+Type TT_mapStringString = new TypeToken<HashMap<String, Double>>() {}.getType();
+Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+File	cachejson = ScriptingEngine.fileFromGit("https://github.com/TechnocopiaPlant/ForkyRobot.git", "baseDim.json")
+def inPut = FileUtils.openInputStream(cachejson);
+def jsonString = IOUtils.toString(inPut);
+HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
+
+double gridUnits = database.baseBad
+def wheelbaseIndex = database.wheelbaseIndex
+def wheelbaseIndexY = database.wheelbaseIndexY
+def rideHeight = database.rideHeight
+def plateThickness =database.plateThickness
+double electronicsBayStandoff = database.electronicsBayStandoff
+def plateLevel = rideHeight+plateThickness
 def wheelbase=gridUnits*wheelbaseIndex
+
 CSGDatabase.clear()
 LengthParameter printerOffset 			= new LengthParameter("printerOffset",0.5,[1.2,0])
 printerOffset.setMM(0.25)
@@ -35,7 +53,7 @@ def nutsert=new Cylinder(nutsertRad,nursertHeight ).toCSG()
 
 double standOffRadius = nutsertRad*3
 double motorStandoffBoltLen = 45
-double electronicsBayStandoff = 45
+
 
 double sensorWidth = mm(2.95)
 double sensorthickness = mm( 0.1)
@@ -194,11 +212,19 @@ Transform newBatt = new Transform()
 	//.rotz(90)
 	//.movey(gridUnits/2.0+gridUnits*3)
 	.movex(gridUnits*4.5)
-	
+Transform newBatt2 = new Transform()
+	.movex(-centerline)
+	//.rotz(90)
+	//.movey(gridUnits/2.0+gridUnits*3)
+	.movex(gridUnits*(wheelbaseIndex-4.5))
 
+def batTmp=battery
+def batBoxTmp=batteryBox
+batteryBox=batBoxTmp.transformed(newBatt)
+battery=batTmp.transformed(newBatt)
 
-batteryBox=batteryBox.transformed(newBatt)
-battery=battery.transformed(newBatt)
+def batteryBox2=batBoxTmp.transformed(newBatt2)
+def battery2=batTmp.transformed(newBatt2)
 
 batteryBox.setName("batteryBox")
 batteryBox.setManufacturing({ toMfg ->
@@ -206,7 +232,12 @@ batteryBox.setManufacturing({ toMfg ->
 			.rotx(90)
 			.toZMin()
 })
-
+batteryBox2.setName("batteryBox2")
+batteryBox2.setManufacturing({ toMfg ->
+	return toMfg
+			.rotx(90)
+			.toZMin()
+})
 //return [batteryBox,battery,batteryHoles]
 
 CSG standoffCore = new Cylinder(standOffRadius,electronicsBayStandoff).toCSG()
@@ -234,7 +265,7 @@ def standoffLeft = standoff
 				.movex(-gridUnits)
 				.movez(rideHeight+ plateThickness)
 def standoffRight = standoff
-				.movex(gridUnits*7)
+				.movex(gridUnits*(wheelbaseIndex-2))
 				.movez(rideHeight+ plateThickness)
 double hingePoint = electronicsBayStandoff/2
 double spacing = 0.5
@@ -266,14 +297,16 @@ def upper = hingeBase.toZMax().movez(electronicsBayStandoff).union([hingePillar2
 			hingeBolt
 			])
 def hingeParts = [upper,lower]
+double center = database.wheelbaseIndex/2
 
 def leftHinge = hingeParts.collect{
-	it.move(gridUnits*2,gridUnits*6,rideHeight+ plateThickness)
+	it.move(gridUnits*(center-2.5),gridUnits*(center+1.5),rideHeight+ plateThickness)
 }
 def rightHinge = hingeParts.collect{
-	it.move(gridUnits*6,gridUnits*6,rideHeight+ plateThickness)
+	it.move(gridUnits*(center+1.5),gridUnits*(center+1.5),rideHeight+ plateThickness)
 }
-def cableGuide = upper.move(gridUnits*4,gridUnits*6,rideHeight+ plateThickness)
+
+def cableGuide = upper.move(gridUnits*(center-0.5),gridUnits*(center+1.5),rideHeight+ plateThickness)
 
 CSG sensorPlateCore = new Cylinder(standOffRadius,plateThickness).toCSG()
 
@@ -289,11 +322,12 @@ def sensorPlate = sensorPlateCore.union([
 	boltHole.move(gridUnits,0,0)
 	])
 	.move(gridUnits*4,-gridUnits,plateLevel)
-
+double castorDistanceY =gridUnits*(Math.round((wheelbaseIndexY/2.0))+1)
+	
 Transform moveSensor= new Transform()
 			.rotz(180)
-			.movex(gridUnits*9)
-			.movey(gridUnits*5)
+			.movex( gridUnits*(wheelbaseIndex/2+4.5))
+			.movey(castorDistanceY-gridUnits)
 
 Transform longSensor= new Transform()
 			//.movex(gridUnits*9)
@@ -302,7 +336,6 @@ Transform longSensor= new Transform()
 println "Making castor"
 def cast = castor()
 double castorStandoff = cast.getMinZ()
-double castorDistanceY =gridUnits*(Math.round((wheelbaseIndexY/2.0))+1)
 def movedCastor =cast.toZMin()
 				.movex( gridUnits*wheelbaseIndex/2)
 				.movey(castorDistanceY)
@@ -624,9 +657,9 @@ def netmoverP= new Cylinder(5.0/2,standoffHeight/2).toCSG()
 def netmoverV= new Cylinder(3/2,standoffHeight).toCSG()
 			.toZMin()
 			.movez(BottomOfPlate-10)
-for(int i=0;i<8;i++)
+for(int i=0;i<wheelbaseIndexY+7;i++)
 	for(int j=0;j<(wheelbaseIndex+3);j++){
-		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits)
+		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits*7)
 				   .movex(gridUnits*j-gridUnits))
 }
 
@@ -655,7 +688,7 @@ def driveGearl = driveGear.mirrorx().movex(wheelbase)
 def wheelAsmbl = wheelAsmb.mirrorx().movex(wheelbase)
 def tirel = tire.mirrorx().movex(wheelbase)
 def motorBlankl=motorBlank.mirrorx().movex(wheelbase)
-double plateRadius = (13.0*25.4)/2
+double plateRadius = ((wheelbaseIndex+4)*25.4)/2
 
 CSG plateRound =new Cylinder(plateRadius,plateRadius,plateThickness,(int)60).toCSG() 
 				.toZMin()
@@ -663,13 +696,14 @@ CSG plateRound =new Cylinder(plateRadius,plateRadius,plateThickness,(int)60).toC
 def plateCubic = new Cube(plateRadius*2,gridUnits*(wheelbaseIndexY+2),plateThickness).toCSG()
 				.toZMin()
 				.toYMin()
-				.move(centerline,-gridUnits*1.5,BottomOfPlate)
+				.move(centerline,-gridUnits*7,BottomOfPlate)
 println "Cutting grid from plate, may take a while..."
 CSG plate =  plateRound
 				.intersect(plateCubic)
 				.difference(nutsertGridPlate)
 				.difference(battery)
-plate.setColor(Color.BROWN)
+				.difference(battery2)
+plate.setColor(Color.web("#EDCAA1"))
 
 def plate2 = plate .movez(electronicsBayStandoff+plateThickness)
 println "Plate Dimentions "+(plateRadius*2.0/25.4)+"\" by "+(plate.getTotalY()/25.4)+"\""
@@ -817,7 +851,7 @@ println "Plate dimentions x="+plate.getTotalX()+" y="+plate.getTotalY()
 println "Weel center line to outer wall of bracket="+Math.abs(bracket.getMinX())
 parts=  [driveGear,driveGearl,bracket, bracketm,wheelAsmb,wheelAsmbl, movedCastor,standoffPart,
 plate,tire,tirel,motorBlankl,
-motorBlank,batteryBox,
+motorBlank,batteryBox,batteryBox2,
 standoffLeft,
 standoffRight,
 plate2,
@@ -827,7 +861,20 @@ shortsensorPlate,
 shortsensorStandOff
 
 ]
-return parts
+
+void flatten(ArrayList<CSG> flat,List<Object> incoming) {
+	for(Object o:incoming) {
+		if(List.class.isInstance(o)) {
+			flatten(flat,o)
+		}
+		if(CSG.class.isInstance(o)) {
+			flat.add(o)
+		}
+	}
+}
+def flat=[]
+flatten(flat,parts)
+return flat
 
 def toProject =[bracket,wheelAsmb,tire,plate]
 def toProjectF =[bracket,bracketm,wheelAsmb,wheelAsmbl,tire,plate,tirel]
