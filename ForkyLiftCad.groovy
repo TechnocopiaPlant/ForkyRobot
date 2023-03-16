@@ -371,8 +371,12 @@ return new ICadGenerator(){
 									.movex(rodToBoardDistance)
 									.toZMin()
 									.movez(-sideBraceDistacne)
-					SideBoards.add(SideBoard.toYMax().movey(-shaftHolderY/2))
-					SideBoards.add(SideBoard.toYMin().movey(shaftHolderY/2))
+					def sideBoardToYMaxMovey = SideBoard.toYMax().movey(-shaftHolderY/2)
+					SideBoards.add(sideBoardToYMaxMovey)
+					def sideBoardToYMinMovey = SideBoard.toYMin().movey(shaftHolderY/2)
+					SideBoards.add(sideBoardToYMinMovey)
+					sideBoardToYMaxMovey.setName("sideBoardRight")
+					sideBoardToYMinMovey.setName("sideBoardLeft")
 				}
 				//if(linkIndex!=2) {
 
@@ -645,17 +649,17 @@ return new ICadGenerator(){
 				def nutsAndBolts=[]
 				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
-					double sliceTHick=0.001
+					double sliceTHick=1
 					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceTHick))
 					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceTHick))
-					boolean left = c.getMinY()>0
+					boolean left = c.getMinY()<0
 					CSG side
-					if(left)
+					if(!left)
 						side = c.intersect(c.getBoundingBox().toYMin().movey(c.getMaxY()-sliceTHick))
 					else
 						side =c.intersect(c.getBoundingBox().toYMax().movey(c.getMinY()+sliceTHick))
-
-					double cornerBoltInset = 20
+					//newBraceBlocks.addAll([backPlate,frontPlate,side])
+					double cornerBoltInset = 22
 					Transform upperRight = new Transform()
 							.move(backPlate.getMinX(),
 							backPlate.getMinY()+cornerBoltInset,
@@ -676,7 +680,7 @@ return new ICadGenerator(){
 					Transform frontLeft = new Transform()
 							.move(frontPlate.getMaxX(),
 							frontPlate.getMaxY()-cornerBoltInset,
-							frontPlate.getMaxZ()-cornerBoltInset)
+							frontPlate.getMinZ()+cornerBoltInset)
 					Transform frontRight = new Transform()
 							.move(frontPlate.getMaxX(),
 							frontPlate.getMinY()+cornerBoltInset,
@@ -684,7 +688,19 @@ return new ICadGenerator(){
 							
 					Transform sideTopBack = new Transform()
 							.move(side.getMinX()+cornerBoltInset,
-							side.getMinY(),
+							left?side.getMinY():side.getMaxY(),
+							side.getMaxZ()-cornerBoltInset)
+					Transform sideBottomBack = new Transform()
+							.move(side.getMinX()+cornerBoltInset,
+							left?side.getMinY():side.getMaxY(),
+							side.getMinZ()+cornerBoltInset)
+					Transform sideBottomFront = new Transform()
+							.move(side.getMaxX()-cornerBoltInset,
+							left?side.getMinY():side.getMaxY(),
+							side.getMinZ()+cornerBoltInset)
+					Transform sideTopFront = new Transform()
+							.move(side.getMaxX()-cornerBoltInset,
+							left?side.getMinY():side.getMaxY(),
 							side.getMaxZ()-cornerBoltInset)
 					def boltLocations =[
 						upperRight,
@@ -695,7 +711,13 @@ return new ICadGenerator(){
 						frontRight
 						]
 					if(linkIndex==0) {
-						boltLocations.add(sideTopBack)
+						boltLocations.addAll([sideTopBack,sideBottomBack])
+						if(c.getMinZ()>rodlen/2) {
+							boltLocations.addAll([sideTopFront])
+							
+						}else
+							boltLocations.addAll([sideBottomFront])
+							
 					}
 					def myBits=[]
 					for(Transform tf:boltLocations) {
@@ -704,30 +726,39 @@ return new ICadGenerator(){
 						double pullBolt=-300
 						boolean isASide =false
 						double rotX = 0
+						double nutX =0
 						if(tf.getX()>0) {
 							angle=-angle
 							pullnut=30
 							pullBolt=300
 						}
-						if(tf.getY()>(shaftHolderY/2-0.1)) {
-							angle=180
-							pullnut=30
-							pullBolt=300
-							rotX=90
-							isASide=true
-						}
-						if(tf.getY()<(-shaftHolderY/2+0.1)) {
-							angle=180
-							pullnut=30
-							pullBolt=300
-							rotX=-90
-							isASide=true
+						if(linkIndex==0) {
+							if(tf.getY()>(shaftHolderY/2-sliceTHick)) {
+								angle=180
+								pullnut=30
+								pullBolt=300
+								rotX=90
+								nutX=-90
+								isASide=true
+							}
+							if(tf.getY()<(-shaftHolderY/2+sliceTHick)) {
+								angle=180
+								pullnut=-30
+								pullBolt=-300
+								rotX=-90
+								nutX=90
+								isASide=true
+							}
 						}
 						CSG myBolt = boltPulley.movez(boardThickness).rotx(rotX).roty(angle).transformed(tf)
-						CSG myNutt = insert.rotx(rotX).roty((angle-180)%360).transformed(tf)
-
-						myNutt.addAssemblyStep(1, new Transform().movex(pullnut))
-						myBolt.addAssemblyStep(10, new Transform().movex(pullBolt))
+						CSG myNutt = insert.rotx(nutX).roty((angle-180)%360).transformed(tf)
+						if(!isASide) {
+							myNutt.addAssemblyStep(1, new Transform().movex(pullnut))
+							myBolt.addAssemblyStep(10, new Transform().movex(pullBolt))
+						}else {
+							myNutt.addAssemblyStep(1, new Transform().movey(pullnut))
+							myBolt.addAssemblyStep(10, new Transform().movey(pullBolt))
+						}
 						if(c.getMaxZ()<rodlen/2) {
 							myNutt.addAssemblyStep( 8+stepOffset, blockXAssembly)
 							myNutt.addAssemblyStep( 9+stepOffset, blocZAssembly)
@@ -809,7 +840,8 @@ return new ICadGenerator(){
 							c.setMfg({incoming->return incoming.rotx(90).toZMin()})
 						else
 							c.setMfg({incoming->return incoming.rotx(-90).toZMin()})
-					c.setName("Board-"+boardIndex+"-link-"+linkIndex)
+					if(c.getName().length()==0)
+						c.setName("Board-"+boardIndex+"-link-"+linkIndex)
 					boardIndex++
 					c.setManipulator(frameListener)
 					c.setColor(Color.web("#EDCAA1"))
