@@ -10,15 +10,17 @@ import eu.mihosoft.vrl.v3d.parametrics.CSGDatabase
 import eu.mihosoft.vrl.v3d.parametrics.LengthParameter
 import eu.mihosoft.vrl.v3d.parametrics.StringParameter
 import javafx.scene.paint.Color
+
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.neuronrobotics.bowlerstudio.scripting.ScriptingEngine
+
 import java.lang.reflect.Type;
+
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-
-println "Loading Forky Robot"
+println "Loading 200x robot"
 def mm(def inches){
 	return inches*25.4
 }
@@ -655,9 +657,9 @@ def netmoverP= new Cylinder(5.0/2,standoffHeight/2).toCSG()
 def netmoverV= new Cylinder(3/2,standoffHeight).toCSG()
 			.toZMin()
 			.movez(BottomOfPlate-10)
-for(int i=0;i<wheelbaseIndexY+7;i++)
+for(int i=0;i<wheelbaseIndexY;i++)
 	for(int j=0;j<(wheelbaseIndex+3);j++){
-		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits*7)
+		nutsertGridPlate.add(netmoverP.movey(gridUnits*i-gridUnits)
 				   .movex(gridUnits*j-gridUnits))
 }
 
