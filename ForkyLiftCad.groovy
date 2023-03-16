@@ -657,28 +657,28 @@ return new ICadGenerator(){
 
 					double cornerBoltInset = 20
 					Transform upperRight = new Transform()
-							.move(backPlate.getMinX()-boardThickness,
+							.move(backPlate.getMinX(),
 							backPlate.getMinY()+cornerBoltInset,
 							backPlate.getMaxZ()-cornerBoltInset)
 					Transform upperLeft = new Transform()
-							.move(backPlate.getMinX()-boardThickness,
+							.move(backPlate.getMinX(),
 							backPlate.getMaxY()-cornerBoltInset,
 							backPlate.getMaxZ()-cornerBoltInset)
 					Transform lowerRight = new Transform()
-							.move(backPlate.getMinX()-boardThickness,
+							.move(backPlate.getMinX(),
 							backPlate.getMinY()+cornerBoltInset,
 							backPlate.getMinZ()+cornerBoltInset)
 					Transform lowerLeft = new Transform()
-							.move(backPlate.getMinX()-boardThickness,
+							.move(backPlate.getMinX(),
 							backPlate.getMaxY()-cornerBoltInset,
 							backPlate.getMinZ()+cornerBoltInset)
 
 					Transform frontLeft = new Transform()
-							.move(frontPlate.getMaxX()+boardThickness,
+							.move(frontPlate.getMaxX(),
 							frontPlate.getMaxY()-cornerBoltInset,
 							frontPlate.getMaxZ()-cornerBoltInset)
 					Transform frontRight = new Transform()
-							.move(frontPlate.getMaxX()+boardThickness,
+							.move(frontPlate.getMaxX(),
 							frontPlate.getMinY()+cornerBoltInset,
 							frontPlate.getMaxZ()-cornerBoltInset)
 							
@@ -710,19 +710,21 @@ return new ICadGenerator(){
 							pullBolt=300
 						}
 						if(tf.getY()>(shaftHolderY/2-0.1)) {
-							angle=0
+							angle=180
 							pullnut=30
 							pullBolt=300
 							rotX=90
+							isASide=true
 						}
 						if(tf.getY()<(-shaftHolderY/2+0.1)) {
-							angle=0
+							angle=180
 							pullnut=30
 							pullBolt=300
 							rotX=-90
+							isASide=true
 						}
-						CSG myBolt = boltPulley.rotx(rotX).roty(angle).transformed(tf)
-						CSG myNutt = insert.movez(boardThickness).rotx(rotX).roty((angle-180)%360).transformed(tf)
+						CSG myBolt = boltPulley.movez(boardThickness).rotx(rotX).roty(angle).transformed(tf)
+						CSG myNutt = insert.rotx(rotX).roty((angle-180)%360).transformed(tf)
 
 						myNutt.addAssemblyStep(1, new Transform().movex(pullnut))
 						myBolt.addAssemblyStep(10, new Transform().movex(pullBolt))
@@ -917,10 +919,11 @@ return new ICadGenerator(){
 				liftCleat.setColor(Color.PINK)
 				liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				back.add(bucket)
+				bucket.setName("bucketItself")
 				back.add(bucketCleat)
 				back.add(liftCleat)
 				liftCleat.setName("EOAT-LiftCleat")
-				bucketCleat.setName("Bucket-LiftCleat")
+				bucketCleat.setName("bucket-LiftCleat")
 				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucketCleat.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
 				bucket.addAssemblyStep(15, new Transform().movex(bucketHeightCentering*2))
