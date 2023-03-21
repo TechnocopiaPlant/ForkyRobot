@@ -85,12 +85,13 @@ return new ICadGenerator(){
 			double pulleySupportThickness = 4.5
 			double pulleyClearenceDistance=1
 			double cleatBracingDepthDH=101.0
+			double plasticOffsetDistance =10
 
 			double boxClearence = (boardThickness+boltHeadHeight+1)*2
-			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+10
-			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
+			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+plasticOffsetDistance
+			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+plasticOffsetDistance+cleatBracing+plasticOffsetDistance
 			double frontCutoutDistance = rodEmbedlen
-			double bearingBlockX = rodToBoardDistance-boxClearence
+			//double bearingBlockX = rodToBoardDistance-boxClearence
 			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
@@ -107,8 +108,8 @@ return new ICadGenerator(){
 			double cordClearenceRadius = cordDiameter/2+(pulleyClearenceDistance+4)
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
 			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
-			double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
-			double connectionSection= cleatBracingDepthDH-boardThickness*2-boxClearence
+			double bearingBlcokBearingSection =rodToBoardDistance-plasticOffsetDistance
+			double connectionSection= cleatBracingDepthDH-boardThickness*2-plasticOffsetDistance
 			double cleatHeight = cleatBracing+cleatDepthVal
 			double kinematicsToBottomOfBucket = bucketHeight-(lipHeight+cleatHeight*2+bucketHeightCentering)
 			double zHeightOfLiftKinematics = kinematicsToBottomOfBucket+plateLevel+electronicsBayStandoff+plateThickness
@@ -246,7 +247,7 @@ return new ICadGenerator(){
 				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
 				double topBottomZHeight = sideBraceDistacne+rodEmbedlen
 				double BackBraceHeight = sideBraceDistacne+bracing
-				double cutoutDepthTotal = depthOcCSection + boardThickness+boxClearence
+				double cutoutDepthTotal = depthOcCSection + boxClearence/2
 				double backBraceXDepth = shaftHolderX-cutoutDepthTotal
 				double braceBasez=sideBraceDistacne+rodEmbedlen
 				double bearingLocationOffset = xyOfPulleyDistance*1
@@ -438,7 +439,7 @@ return new ICadGenerator(){
 					supportBlock=supportBlock
 							.union(
 							supportBlock
-							.movex(-(depthOcCSection + boardThickness+boxClearence)*Math.sqrt(2))
+							.movex(-(depthOcCSection +boxClearence/2)*Math.sqrt(2))
 							).hull()
 					bearingInCShape = supportBlock.rotz(-45).movey(calculatedTotalWidth-lastStageInset-bearingLocationOffset)
 							.union(supportBlock.rotz(45).movey(-calculatedTotalWidth+lastStageInset+bearingLocationOffset))
@@ -917,7 +918,7 @@ return new ICadGenerator(){
 
 				kin.setDH_R(linkIndex, cleatPlacement)
 
-				CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-boxClearence*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
+				CSG heel = new Cube(cleatPlacement*2-bearingBlcokBearingSection*2-boardThickness*2-plasticOffsetDistance*4,cleatWidth,bucketHeightCentering*2+cleatHeight).toCSG()
 						.toZMin()
 						.movez(-bucketHeightCentering)
 				CSG bucketRim = new Cylinder(bucketTopDiam/2,lipHeight).toCSG()
