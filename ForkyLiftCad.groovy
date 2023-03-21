@@ -58,11 +58,12 @@ return new ICadGenerator(){
 			
 			def bearingType=Vitamins.getConfiguration("linearBallBearing", bearingSize)
 			def pulleyBearingConfig = Vitamins.getConfiguration("ballBearing", pulleyBearingSize)
+			def boltDimentions = Vitamins.getConfiguration("capScrew", "M5x25")
 			double bearingThickness = pulleyBearingConfig.width
 			double rodDiam =bearingType.innerDiameter
 			double bearingDiam = bearingType.outerDiameter
 			double bearingHeight = bearingType.length
-
+			double boltHeadHeight = boltDimentions.headHeight
 			CSG vitamin_linearBallBearing_LM10UU = Vitamins.get("linearBallBearing", bearingSize).hull()
 
 
@@ -71,7 +72,6 @@ return new ICadGenerator(){
 			double rodlen = 500
 			double rodEmbedlen =10
 			double boardThickness=6.3
-			double boxClearence = 10
 			double cleatBracing=20
 			double bucketHeightCentering=60
 			double braceHeight = 100
@@ -86,10 +86,11 @@ return new ICadGenerator(){
 			double pulleyClearenceDistance=1
 			double cleatBracingDepthDH=101.0
 
-			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+boxClearence
+			double boxClearence = (boardThickness+boltHeadHeight+1)*2
+			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+10
 			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+boxClearence+cleatBracing+boxClearence
 			double frontCutoutDistance = rodEmbedlen
-			double bearingBlockX = rodToBoardDistance-boxClearence*2
+			double bearingBlockX = rodToBoardDistance-boxClearence
 			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
@@ -103,10 +104,11 @@ return new ICadGenerator(){
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
 			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
+			double cordClearenceRadius = cordDiameter/2+(pulleyClearenceDistance+4)
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
-			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-boxClearence-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
+			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
 			double bearingBlcokBearingSection =rodToBoardDistance-boxClearence
-			double connectionSection= cleatBracingDepthDH-boardThickness*2-boxClearence*2
+			double connectionSection= cleatBracingDepthDH-boardThickness*2-boxClearence
 			double cleatHeight = cleatBracing+cleatDepthVal
 			double kinematicsToBottomOfBucket = bucketHeight-(lipHeight+cleatHeight*2+bucketHeightCentering)
 			double zHeightOfLiftKinematics = kinematicsToBottomOfBucket+plateLevel+electronicsBayStandoff+plateThickness
@@ -190,7 +192,7 @@ return new ICadGenerator(){
 
 				CSG cord = cordPart.union(cordPart.rotx(180))
 				if(useStraitPlugs)
-					cord = new Cylinder(cordDiameter/2+(pulleyClearenceDistance+4), rodlen*4).toCSG()
+					cord = new Cylinder(cordClearenceRadius, rodlen*4).toCSG()
 							.movez(- rodlen*2)
 				toCut.add(cord.movex(distanceBoltToPulleyOutput))
 				toCut.add(cord.movex(-distanceBoltToPulleyOutput))
@@ -365,19 +367,22 @@ return new ICadGenerator(){
 						.movex(rodToBoardDistance)
 						.toZMin()
 				def SideBoards = []
-				if(linkIndex==0) {
-					CSG SideBoard = new Cube(shaftHolderX,boardThickness,boardZTotal).toCSG()
-									.toXMax()
-									.movex(rodToBoardDistance)
-									.toZMin()
-									.movez(-sideBraceDistacne)
-					def sideBoardToYMaxMovey = SideBoard.toYMax().movey(-shaftHolderY/2)
-					SideBoards.add(sideBoardToYMaxMovey)
-					def sideBoardToYMinMovey = SideBoard.toYMin().movey(shaftHolderY/2)
-					SideBoards.add(sideBoardToYMinMovey)
-					sideBoardToYMaxMovey.setName("sideBoardRight")
-					sideBoardToYMinMovey.setName("sideBoardLeft")
-				}
+				//if(linkIndex==0) {
+				
+				double sideBoardX = linkIndex==0?0:cordClearenceRadius+rodToBoardDistance
+				double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistacne
+				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ).toCSG()
+								.toXMax()
+								.movex(rodToBoardDistance-sideBoardX)
+								.toZMin()
+								.movez(-sideBraceDistacne+sideBoardZ)
+				def sideBoardToYMaxMovey = SideBoard.toYMax().movey(-shaftHolderY/2)
+				SideBoards.add(sideBoardToYMaxMovey)
+				def sideBoardToYMinMovey = SideBoard.toYMin().movey(shaftHolderY/2)
+				SideBoards.add(sideBoardToYMinMovey)
+				sideBoardToYMaxMovey.setName("sideBoardRight")
+				sideBoardToYMinMovey.setName("sideBoardLeft")
+				//}
 				//if(linkIndex!=2) {
 
 				CSG topBottomBlockCutout = new Cube(
@@ -653,7 +658,9 @@ return new ICadGenerator(){
 					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceTHick))
 					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceTHick))
 					boolean left = c.getMinY()<0
-					CSG side
+					boolean right = c.getMaxY()>0
+					CSG leftSide
+					CSG rightSide
 					double staage = linkIndex==0?0:0
 					
 					CSG sideSlice = new Cube(c.getTotalX(),sliceTHick,c.getTotalZ()).toCSG()
@@ -663,13 +670,12 @@ return new ICadGenerator(){
 									.movez(c.getMinZ())
 					double moveAwayFromPulley =c.getMinZ()>rodlen/2?0:xyOfPulleyDistance+5
 					
-					if(!left)
-						side = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceTHick-staage-moveAwayFromPulley))
+					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceTHick-staage-moveAwayFromPulley))
 							.movey(moveAwayFromPulley)
-					else
-						side =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceTHick+staage+moveAwayFromPulley))
+
+					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceTHick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
-					newBraceBlocks.addAll([backPlate,frontPlate,side])
+					newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
 					double cornerBoltInset = 22
 					Transform upperRight = new Transform()
 							.move(backPlate.getMinX(),
@@ -696,23 +702,41 @@ return new ICadGenerator(){
 							.move(frontPlate.getMaxX(),
 							frontPlate.getMinY()+cornerBoltInset,
 							frontPlate.getMaxZ()-cornerBoltInset)
+					double insetBoltFromCorner = linkIndex==0?0:cordClearenceRadius*2
+					Transform sideTopBackLeft = new Transform()
+							.move(leftSide.getMinX()+cornerBoltInset,
+							leftSide.getMinY(),
+							leftSide.getMaxZ()-cornerBoltInset)
+					Transform sideBottomBackLeft = new Transform()
+							.move(leftSide.getMinX()+cornerBoltInset,
+							leftSide.getMinY(),
+							leftSide.getMinZ()+cornerBoltInset)
+					Transform sideBottomFrontLeft = new Transform()
+							.move(leftSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							leftSide.getMinY(),
+							leftSide.getMinZ()+cornerBoltInset)
+					Transform sideTopFrontLeft = new Transform()
+							.move(leftSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							leftSide.getMinY(),
+							leftSide.getMaxZ()-cornerBoltInset)
 							
-					Transform sideTopBack = new Transform()
-							.move(side.getMinX()+cornerBoltInset,
-							left?side.getMinY():side.getMaxY(),
-							side.getMaxZ()-cornerBoltInset)
-					Transform sideBottomBack = new Transform()
-							.move(side.getMinX()+cornerBoltInset,
-							left?side.getMinY():side.getMaxY(),
-							side.getMinZ()+cornerBoltInset)
-					Transform sideBottomFront = new Transform()
-							.move(side.getMaxX()-cornerBoltInset,
-							left?side.getMinY():side.getMaxY(),
-							side.getMinZ()+cornerBoltInset)
-					Transform sideTopFront = new Transform()
-							.move(side.getMaxX()-cornerBoltInset,
-							left?side.getMinY():side.getMaxY(),
-							side.getMaxZ()-cornerBoltInset)
+					Transform sideTopBackRight = new Transform()
+							.move(rightSide.getMinX()+cornerBoltInset,
+							rightSide.getMaxY(),
+							rightSide.getMaxZ()-cornerBoltInset)
+					Transform sideBottomBackRight = new Transform()
+							.move(rightSide.getMinX()+cornerBoltInset,
+							rightSide.getMaxY(),
+							rightSide.getMinZ()+cornerBoltInset)
+					Transform sideBottomFrontRight = new Transform()
+							.move(rightSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							rightSide.getMaxY(),
+							rightSide.getMinZ()+cornerBoltInset)
+					Transform sideTopFrontRight = new Transform()
+							.move(rightSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							rightSide.getMaxY(),
+							rightSide.getMaxZ()-cornerBoltInset)
+							
 					def boltLocations =[
 						upperRight,
 						upperLeft,
@@ -721,13 +745,22 @@ return new ICadGenerator(){
 						frontLeft,
 						frontRight
 						]
-					if(linkIndex==0) {
-						boltLocations.addAll([sideTopBack,sideBottomBack])
+					if(left) {
+						boltLocations.addAll([sideTopBackLeft,sideBottomBackLeft])
 						if(c.getMinZ()>rodlen/2) {
-							boltLocations.addAll([sideTopFront])
+							boltLocations.addAll([sideTopFrontLeft])
 							
 						}else
-							boltLocations.addAll([sideBottomFront])
+							boltLocations.addAll([sideBottomFrontLeft])
+							
+					}
+					if(right) {
+						boltLocations.addAll([sideTopBackRight,sideBottomBackRight])
+						if(c.getMinZ()>rodlen/2) {
+							boltLocations.addAll([sideTopFrontRight])
+							
+						}else
+							boltLocations.addAll([sideBottomFrontRight])
 							
 					}
 					def myBits=[]
