@@ -92,7 +92,7 @@ return new ICadGenerator(){
 			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+plasticOffsetDistance+cleatBracing+plasticOffsetDistance
 			double frontCutoutDistance = rodEmbedlen
 			//double bearingBlockX = rodToBoardDistance-boxClearence
-			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2
+			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2+7
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
 			double supportPulleyRad=pulleyRadius+cordDiameter+pulleyClearenceDistance
@@ -1014,14 +1014,7 @@ return new ICadGenerator(){
 				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(baseOfArmFromCenter)
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
-				//back.addAll(bb.get("add"))
-				//back.addAll(bb.get("cut"))
-				//back.addAll(bb.get("vitamins"))
-				//				back.add(new Cube(1).toCSG())
-				//				for(CSG c:back) {
-				//					c.setManipulator(arg0.getRootListener())
-				//					c.setMfg({inc->return null})
-				//				}
+
 				def baseParts=ScriptingEngine.gitScriptRun(
 						HTTPS_GITHUB_COM_TECHNOCOPIA_PLANT_FORKY_ROBOT_GIT,
 						"robotBase.groovy",null)
