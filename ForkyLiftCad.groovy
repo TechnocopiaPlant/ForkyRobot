@@ -103,7 +103,7 @@ def var = new ICadGenerator() {
 			double lineThreeWidth = linkTwoWidth+4*xyOfPulleyDistance
 			double calculatedTotalWidth = lineThreeWidth/2;
 			double braceInsetDistance=2*xyOfPulleyDistance
-			double sideBraceDistacne =braceInsetDistance/2
+			double sideBraceDistance =braceInsetDistance/2
 			double pulleyClearanceDiameter=pulleyRadius*2+cordDiameter+pulleyClearanceDistance
 			double cordClearanceRadius = cordDiameter/2+(pulleyClearanceDistance+4)
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
@@ -245,28 +245,28 @@ def var = new ICadGenerator() {
 				}
 				double shaftHolderY=boardWidth
 				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
-				double topBottomZHeight = sideBraceDistacne+rodEmbedlen
-				double BackBraceHeight = sideBraceDistacne+bracing
+				double topBottomZHeight = sideBraceDistance+rodEmbedlen
+				double BackBraceHeight = sideBraceDistance+bracing
 				double cutoutDepthTotal = depthOcCSection + boxClearance/2
 				double backBraceXDepth = shaftHolderX-cutoutDepthTotal
-				double braceBasez=sideBraceDistacne+rodEmbedlen
+				double braceBasez=sideBraceDistance+rodEmbedlen
 				double bearingLocationOffset = xyOfPulleyDistance*1
 				double cutoutWidth = shaftHolderY - braceInsetDistance*2+boxClearance
 				if(cutoutWidth<supportPulleyRad*2)
 					cutoutWidth=supportPulleyRad*2+1
 				double frontCutoutWidth = boardWidth-rodEmbedlen*2-xyOfPulleyDistance*2
 				double ZFrontCutout = rodlen-rodEmbedlen*2
-				double boardZTotal =rodlen+sideBraceDistacne*2
+				double boardZTotal =rodlen+sideBraceDistance*2
 				double zDisplacement=0
 
 				if(linkIndex!=2) {
 					frontCutoutWidth = cutoutWidth
 					ZFrontCutout=boardZTotal
-					zDisplacement=-rodEmbedlen-sideBraceDistacne
+					zDisplacement=-rodEmbedlen-sideBraceDistance
 				}
 				CSG board = new Cube(boardThickness,boardWidth,boardZTotal).toCSG()
 						.toZMin()
-						.movez(-sideBraceDistacne)
+						.movez(-sideBraceDistance)
 				CSG cutout = new Cube(boardThickness,frontCutoutWidth,ZFrontCutout).toCSG()
 						.toZMin()
 						.movez(rodEmbedlen+zDisplacement)
@@ -280,7 +280,7 @@ def var = new ICadGenerator() {
 				def clearanceParts=[]
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
 				Transform blockXAssembly =new Transform().movex(rodToBoardDistance*(3))
-				Transform blocZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
+				Transform blockZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
 				Transform bottomSwing =  new Transform().movex(100).movez(100*(linkIndex+1))
 				Transform bottomSwingNext =  new Transform().movex(100).movez(100*(linkIndex+2))
 				Transform topSplay = new Transform().movez(-100.0*(linkIndex+1))
@@ -342,12 +342,12 @@ def var = new ICadGenerator() {
 					lowerBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(-(bearingHeight+5)))
 					if(linkIndex!=2) {
 						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						upperBearing.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						upperBearing.addAssemblyStep( 2, bottomSwingNext)
 
 
 						lowerBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						lowerBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						lowerBearing.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						lowerBearing.addAssemblyStep( 2, bottomSwingNext)
 
 					}else {
@@ -355,7 +355,7 @@ def var = new ICadGenerator() {
 						lowerBearing.addAssemblyStep( 2, liftCleatAssembly)
 					}
 					rod.addAssemblyStep( 8+stepOffset, blockXAssembly)
-					rod.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					rod.addAssemblyStep( 9+stepOffset, blockZAssembly)
 					if(linkIndex==2)
 						rod.addAssemblyStep( 7+stepOffset, new Transform().movez(2*rodEmbedlen))
 					else
@@ -371,12 +371,12 @@ def var = new ICadGenerator() {
 				//if(linkIndex==0) {
 				
 				double sideBoardX = linkIndex==0?0:cordClearanceRadius+rodToBoardDistance
-				double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistacne
+				double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistance
 				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ).toCSG()
 								.toXMax()
 								.movex(rodToBoardDistance-sideBoardX)
 								.toZMin()
-								.movez(-sideBraceDistacne+sideBoardZ)
+								.movez(-sideBraceDistance+sideBoardZ)
 				def sideBoardToYMaxMovey = SideBoard.toYMax().movey(-shaftHolderY/2)
 				SideBoards.add(sideBoardToYMaxMovey)
 				def sideBoardToYMinMovey = SideBoard.toYMin().movey(shaftHolderY/2)
@@ -411,21 +411,21 @@ def var = new ICadGenerator() {
 				BackBrace=BackBrace
 						.movex(-backBraceXDepth/2-cutoutDepthTotal+rodToBoardDistance)
 						.toZMin()
-				CSG IntersectionShape = new Cube(shaftHolderX,shaftHolderY,sideBraceDistacne+rodEmbedlen+supportPulleyRad*2).toCSG()
+				CSG IntersectionShape = new Cube(shaftHolderX,shaftHolderY,sideBraceDistance+rodEmbedlen+supportPulleyRad*2).toCSG()
 						.toXMax()
 						.movex(rodToBoardDistance)
 						.toZMin()
 						.movez(-supportPulleyRad*2)
-						.movez(-sideBraceDistacne)
+						.movez(-sideBraceDistance)
 
 
 				CSG topBlock=topBottomBlock
 						.union(BackBrace.rotx(180).movez(braceBasez))
-						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2)
+						.movez(rodlen+rodEmbedlen/2-sideBraceDistance/2)
 						.difference(clearanceParts)
 				CSG bottomBlock = topBottomBlock
 						.union(BackBrace)
-						.movez(-sideBraceDistacne)
+						.movez(-sideBraceDistance)
 						.difference(clearanceParts)
 
 
@@ -451,11 +451,11 @@ def var = new ICadGenerator() {
 
 				Transform bottomLeft = new Transform()
 						.rotZ(-45)
-						.movez(-4-sideBraceDistacne)
+						.movez(-4-sideBraceDistance)
 						.movey(pulleyLocationBottom)
 				Transform bottomRight = new Transform()
 						.rotZ(45)
-						.movez(-4-sideBraceDistacne)
+						.movez(-4-sideBraceDistance)
 						.movey(-pulleyLocationBottom)
 				Transform topVitaminsMove=new Transform().movez(bearingHeight+5)
 				int pulleyIndex=1
@@ -480,12 +480,12 @@ def var = new ICadGenerator() {
 						pulley.setName("Bottom-Pulley-"+pulleyIndex+"-link-"+linkIndex)
 
 						pulley.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						pulley.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						pulley.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						for(CSG c:bb.get("vitamins")) {
 							c.setManipulator(frameListener)
 
 							c.addAssemblyStep( 8+stepOffset, blockXAssembly)
-							c.addAssemblyStep( 9+stepOffset, blocZAssembly)
+							c.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						}
 						Transform pulleyBearingSubAssembly = new Transform().movez(-100)
 						pulley.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
@@ -510,18 +510,18 @@ def var = new ICadGenerator() {
 						}
 					}
 					bottomBlock=bottomBlock
-							.difference(topBottomBlockCutout.movez(-sideBraceDistacne))
+							.difference(topBottomBlockCutout.movez(-sideBraceDistance))
 							.difference(backBoard)
 
 
 				}
 				Transform topLeft = new Transform()
 						.rotZ(45)
-						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
+						.movez(rodlen+rodEmbedlen/2-sideBraceDistance/2 + sideBraceDistance+rodEmbedlen+4)
 						.movey(pulleyLocation)
 				Transform topRight = new Transform()
 						.rotZ(-45)
-						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2 + sideBraceDistacne+rodEmbedlen+4)
+						.movez(rodlen+rodEmbedlen/2-sideBraceDistance/2 + sideBraceDistance+rodEmbedlen+4)
 						.movey(-pulleyLocation)
 				pulleyIndex=1
 				for(Transform tf:[topLeft, topRight]) {
@@ -540,7 +540,7 @@ def var = new ICadGenerator() {
 					topBlock=topBlock.union(bb.get("add"))
 					if(linkIndex!=2)
 						topBlock=topBlock
-								.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2+sideBraceDistacne/2-bracing))
+								.difference(topBottomBlockCutout.movez(rodlen+rodEmbedlen/2+sideBraceDistance/2-bracing))
 								.difference(backBoard)
 					vitamins.addAll(bb.get("vitamins"))
 					back.addAll(bb.get("vitamins"))
@@ -655,26 +655,26 @@ def var = new ICadGenerator() {
 				def nutsAndBolts=[]
 				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
-					double sliceTHick=1
-					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceTHick))
-					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceTHick))
+					double sliceThick=1
+					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceThick))
+					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceThick))
 					boolean left = c.getMinY()<0
 					boolean right = c.getMaxY()>0
 					CSG leftSide
 					CSG rightSide
 					double staage = linkIndex==0?0:0
 					
-					CSG sideSlice = new Cube(c.getTotalX(),sliceTHick,c.getTotalZ()).toCSG()
+					CSG sideSlice = new Cube(c.getTotalX(),sliceThick,c.getTotalZ()).toCSG()
 									.toXMin()
 									.toZMin()
 									.movex(c.getMinX())
 									.movez(c.getMinZ())
 					double moveAwayFromPulley =c.getMinZ()>rodlen/2?0:xyOfPulleyDistance+5
 					
-					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceTHick-staage-moveAwayFromPulley))
+					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceThick-staage-moveAwayFromPulley))
 							.movey(moveAwayFromPulley)
 
-					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceTHick+staage+moveAwayFromPulley))
+					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceThick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
 					newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
 					double cornerBoltInset = 22
@@ -778,7 +778,7 @@ def var = new ICadGenerator() {
 							pullBolt=300
 						}
 						//if(linkIndex==0) {
-							if(tf.getY()>(shaftHolderY/2-sliceTHick)) {
+							if(tf.getY()>(shaftHolderY/2-sliceThick)) {
 								angle=180
 								pullnut=30
 								pullBolt=300
@@ -786,7 +786,7 @@ def var = new ICadGenerator() {
 								nutX=-90
 								isASide=true
 							}
-							if(tf.getY()<(-shaftHolderY/2+sliceTHick)) {
+							if(tf.getY()<(-shaftHolderY/2+sliceThick)) {
 								angle=180
 								pullnut=-30
 								pullBolt=-300
@@ -806,7 +806,7 @@ def var = new ICadGenerator() {
 						}
 						if(c.getMaxZ()<rodlen/2) {
 							myNutt.addAssemblyStep( 8+stepOffset, blockXAssembly)
-							myNutt.addAssemblyStep( 9+stepOffset, blocZAssembly)
+							myNutt.addAssemblyStep( 9+stepOffset, blockZAssembly)
 							myNutt.addAssemblyStep( 2, bottomSwing)
 						}else{
 							myNutt.addAssemblyStep( 8+stepOffset, topVitaminsMove)
@@ -833,7 +833,7 @@ def var = new ICadGenerator() {
 				for(CSG c:newBraceBlocks) {
 					if(c.getMaxZ()<rodlen/2) {
 						c.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						c.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						c.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						c.addAssemblyStep( 2, bottomSwing)
 					}else{
 						c.addAssemblyStep( 8+stepOffset, topVitaminsMove)
@@ -869,9 +869,9 @@ def var = new ICadGenerator() {
 				for(CSG c:boards) {
 					if(c.getMaxX()>0) {
 						c.addAssemblyStep( 9, new Transform().movex(braceHeight))
-						c.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+						c.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistance*2))
 					}else {
-						c.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistacne*2))
+						c.addAssemblyStep( 4, new Transform().movez(rodlen+sideBraceDistance*2))
 						
 					}
 					if(c.getTotalX()-0.1<boardThickness)
@@ -1029,7 +1029,6 @@ def var = new ICadGenerator() {
 
 
 		}
-return var
-//def //var2 = var.pulleyGen(new Transform())
+return var//var2 = var.pulleyGen(new Transform())
 //def var3 = var.pulleyGen(new Transform().movey(30))
 //return [var2.get('cut'), var3.get('vitamins')]
