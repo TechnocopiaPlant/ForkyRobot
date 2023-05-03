@@ -280,7 +280,7 @@ def var = new ICadGenerator() {
 				def clearanceParts=[]
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
 				Transform blockXAssembly =new Transform().movex(rodToBoardDistance*(3))
-				Transform blocZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
+				Transform blockZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
 				Transform bottomSwing =  new Transform().movex(100).movez(100*(linkIndex+1))
 				Transform bottomSwingNext =  new Transform().movex(100).movez(100*(linkIndex+2))
 				Transform topSplay = new Transform().movez(-100.0*(linkIndex+1))
@@ -342,12 +342,12 @@ def var = new ICadGenerator() {
 					lowerBearing.addAssemblyStep( 1+stepOffset, new Transform().movez(-(bearingHeight+5)))
 					if(linkIndex!=2) {
 						upperBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						upperBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						upperBearing.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						upperBearing.addAssemblyStep( 2, bottomSwingNext)
 
 
 						lowerBearing.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						lowerBearing.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						lowerBearing.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						lowerBearing.addAssemblyStep( 2, bottomSwingNext)
 
 					}else {
@@ -355,7 +355,7 @@ def var = new ICadGenerator() {
 						lowerBearing.addAssemblyStep( 2, liftCleatAssembly)
 					}
 					rod.addAssemblyStep( 8+stepOffset, blockXAssembly)
-					rod.addAssemblyStep( 9+stepOffset, blocZAssembly)
+					rod.addAssemblyStep( 9+stepOffset, blockZAssembly)
 					if(linkIndex==2)
 						rod.addAssemblyStep( 7+stepOffset, new Transform().movez(2*rodEmbedlen))
 					else
@@ -480,12 +480,12 @@ def var = new ICadGenerator() {
 						pulley.setName("Bottom-Pulley-"+pulleyIndex+"-link-"+linkIndex)
 
 						pulley.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						pulley.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						pulley.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						for(CSG c:bb.get("vitamins")) {
 							c.setManipulator(frameListener)
 
 							c.addAssemblyStep( 8+stepOffset, blockXAssembly)
-							c.addAssemblyStep( 9+stepOffset, blocZAssembly)
+							c.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						}
 						Transform pulleyBearingSubAssembly = new Transform().movez(-100)
 						pulley.addAssemblyStep( 12+stepOffset, pulleyBearingSubAssembly)
@@ -806,7 +806,7 @@ def var = new ICadGenerator() {
 						}
 						if(c.getMaxZ()<rodlen/2) {
 							myNutt.addAssemblyStep( 8+stepOffset, blockXAssembly)
-							myNutt.addAssemblyStep( 9+stepOffset, blocZAssembly)
+							myNutt.addAssemblyStep( 9+stepOffset, blockZAssembly)
 							myNutt.addAssemblyStep( 2, bottomSwing)
 						}else{
 							myNutt.addAssemblyStep( 8+stepOffset, topVitaminsMove)
@@ -833,7 +833,7 @@ def var = new ICadGenerator() {
 				for(CSG c:newBraceBlocks) {
 					if(c.getMaxZ()<rodlen/2) {
 						c.addAssemblyStep( 8+stepOffset, blockXAssembly)
-						c.addAssemblyStep( 9+stepOffset, blocZAssembly)
+						c.addAssemblyStep( 9+stepOffset, blockZAssembly)
 						c.addAssemblyStep( 2, bottomSwing)
 					}else{
 						c.addAssemblyStep( 8+stepOffset, topVitaminsMove)
@@ -1029,7 +1029,6 @@ def var = new ICadGenerator() {
 
 
 		}
-return var
-//def //var2 = var.pulleyGen(new Transform())
+return var//var2 = var.pulleyGen(new Transform())
 //def var3 = var.pulleyGen(new Transform().movey(30))
 //return [var2.get('cut'), var3.get('vitamins')]
