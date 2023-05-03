@@ -81,19 +81,19 @@ def var = new ICadGenerator() {
 			double cordDiameter = 6
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
-			double pulleyClearenceDistance=1
+			double pulleyClearanceDistance=1
 			double cleatBracingDepthDH=101.0
 			double plasticOffsetDistance =10
 
-			double boxClearence = (boardThickness+boltHeadHeight+1)*2
+			double boxClearance = (boardThickness+boltHeadHeight+1)*2
 			double rodToBoardDistance =bearingDiam/2+bearingPlasticSurround+plasticOffsetDistance
 			double cleatPlacement = rodToBoardDistance*2+boardThickness*2+plasticOffsetDistance+cleatBracing+plasticOffsetDistance
 			double frontCutoutDistance = rodEmbedlen
-			//double bearingBlockX = rodToBoardDistance-boxClearence
+			//double bearingBlockX = rodToBoardDistance-boxClearance
 			double pulleyRadius = bearingPlasticSurround*2+bearingDiam/2+7
 			double pulleyWidth = bearingThickness*2+pulleyBearingSeperation
 			double distanceBoltToPulleyOutput = pulleyRadius+cordDiameter/2
-			double supportPulleyRad=pulleyRadius+cordDiameter+pulleyClearenceDistance
+			double supportPulleyRad=pulleyRadius+cordDiameter+pulleyClearanceDistance
 			double TotalPulleyCordToCord= distanceBoltToPulleyOutput*2
 			double xyOfPulleyDistance = TotalPulleyCordToCord/Math.sqrt(2)
 			double linkOneWidth = TotalPulleyCordToCord+4*xyOfPulleyDistance
@@ -102,10 +102,10 @@ def var = new ICadGenerator() {
 			double calculatedTotalWidth = lineThreeWidth/2;
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
-			double pulleyClearenceDiameter=pulleyRadius*2+cordDiameter+pulleyClearenceDistance
-			double cordClearenceRadius = cordDiameter/2+(pulleyClearenceDistance+4)
+			double pulleyClearanceDiameter=pulleyRadius*2+cordDiameter+pulleyClearanceDistance
+			double cordClearanceRadius = cordDiameter/2+(pulleyClearanceDistance+4)
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
-			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
+			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-rodEmbedlen*2-boxClearance-xyOfPulleyDistance*2
 			double bearingBlcokBearingSection =rodToBoardDistance-plasticOffsetDistance
 			double connectionSection= cleatBracingDepthDH-boardThickness*2-plasticOffsetDistance
 			double cleatHeight = cleatBracing+cleatDepthVal
@@ -152,11 +152,11 @@ def var = new ICadGenerator() {
 							cutout
 						])
 
-				CSG pulleyClearenceShape = new Cylinder(pulleyClearenceDiameter/2, pulleyWidth+pulleyClearenceDistance).toCSG()
+				CSG pulleyClearanceShape = new Cylinder(pulleyClearanceDiameter/2, pulleyWidth+pulleyClearanceDistance).toCSG()
 						.rotx(90)
-						.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
+						.movey(-pulleyWidth/2-pulleyClearanceDistance/2)
 
-				double boltDistance = pulleyWidth/2+pulleyClearenceDistance/2+pulleySupportThickness
+				double boltDistance = pulleyWidth/2+pulleyClearanceDistance/2+pulleySupportThickness
 
 				CSG bolt = boltPulley
 						.rotx(90)
@@ -166,15 +166,15 @@ def var = new ICadGenerator() {
 				CSG supportPlate = new Cylinder(supportPulleyRad, pulleySupportThickness).toCSG()
 						.rotx(90)
 						.difference(bolt)
-				CSG washerCone = new Cylinder(5.5/2,4, pulleyClearenceDistance/2,30).toCSG()
+				CSG washerCone = new Cylinder(5.5/2,4, pulleyClearanceDistance/2,30).toCSG()
 						.rotx(-90)
 						.difference(bolt)
 				CSG leftSupport = supportPlate.toYMin()
-						.union(washerCone.rotz(180).toYMin().movey(-pulleyClearenceDistance/2))
-						.movey(pulleyWidth/2+pulleyClearenceDistance/2)
+						.union(washerCone.rotz(180).toYMin().movey(-pulleyClearanceDistance/2))
+						.movey(pulleyWidth/2+pulleyClearanceDistance/2)
 				CSG rightSupport = supportPlate.toYMax()
-						.union(washerCone.toYMax().movey(pulleyClearenceDistance/2))
-						.movey(-pulleyWidth/2-pulleyClearenceDistance/2)
+						.union(washerCone.toYMax().movey(pulleyClearanceDistance/2))
+						.movey(-pulleyWidth/2-pulleyClearanceDistance/2)
 				toAdd.add(rightSupport)
 				toAdd.add(leftSupport)
 				vitamins.add(pulley)
@@ -183,7 +183,7 @@ def var = new ICadGenerator() {
 				//vitamins.add(cutout)
 				vitamins.add(bolt)
 				vitamins.add(nutForPulley)
-				toCut.add(pulleyClearenceShape)
+				toCut.add(pulleyClearanceShape)
 				double coneStartOffset=10
 				CSG cordPart =  Parabola.cone(cordDiameter*6, rodlen+coneStartOffset)
 						.toZMax()
@@ -191,7 +191,7 @@ def var = new ICadGenerator() {
 
 				CSG cord = cordPart.union(cordPart.rotx(180))
 				if(useStraitPlugs)
-					cord = new Cylinder(cordClearenceRadius, rodlen*4).toCSG()
+					cord = new Cylinder(cordClearanceRadius, rodlen*4).toCSG()
 							.movez(- rodlen*2)
 				toCut.add(cord.movex(distanceBoltToPulleyOutput))
 				toCut.add(cord.movex(-distanceBoltToPulleyOutput))
@@ -217,7 +217,7 @@ def var = new ICadGenerator() {
 
 				double bracing = braceHeight
 				double height =rodlen - braceHeight -rodEmbedlen
-				double depthOcCSection = (2.0-linkIndex)*rodToBoardDistance*2+(pulleyWidth+pulleyClearenceDistance)*2+boxClearence
+				double depthOcCSection = (2.0-linkIndex)*rodToBoardDistance*2+(pulleyWidth+pulleyClearanceDistance)*2+boxClearance
 				try {
 					kin.setMaxEngineeringUnits(linkIndex,height)
 				}catch(Throwable t) {
@@ -226,9 +226,9 @@ def var = new ICadGenerator() {
 				def vitamins =[]
 				double stageInset = (braceInsetDistance*linkIndex)
 				double lastStageInset = (braceInsetDistance*(linkIndex-1))
-				double boardWidth = calculatedTotalWidth*2-stageInset*2-boxClearence
+				double boardWidth = calculatedTotalWidth*2-stageInset*2-boxClearance
 				double pulleyLocation=(calculatedTotalWidth-stageInset-xyOfPulleyDistance*2)
-				double pulleyLocationBottom=pulleyLocation+2*xyOfPulleyDistance//(shaftHolderY/2 -cordDiameter-pulleyClearenceDistance*2)
+				double pulleyLocationBottom=pulleyLocation+2*xyOfPulleyDistance//(shaftHolderY/2 -cordDiameter-pulleyClearanceDistance*2)
 				double bearingBlockWidth =( pulleyLocation+xyOfPulleyDistance/2)*2
 				if(linkIndex!=2) {
 					kin.setDH_R(linkIndex, 0)
@@ -245,11 +245,11 @@ def var = new ICadGenerator() {
 				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
 				double topBottomZHeight = sideBraceDistacne+rodEmbedlen
 				double BackBraceHeight = sideBraceDistacne+bracing
-				double cutoutDepthTotal = depthOcCSection + boxClearence/2
+				double cutoutDepthTotal = depthOcCSection + boxClearance/2
 				double backBraceXDepth = shaftHolderX-cutoutDepthTotal
 				double braceBasez=sideBraceDistacne+rodEmbedlen
 				double bearingLocationOffset = xyOfPulleyDistance*1
-				double cutoutWidth = shaftHolderY - braceInsetDistance*2+boxClearence
+				double cutoutWidth = shaftHolderY - braceInsetDistance*2+boxClearance
 				if(cutoutWidth<supportPulleyRad*2)
 					cutoutWidth=supportPulleyRad*2+1
 				double frontCutoutWidth = boardWidth-rodEmbedlen*2-xyOfPulleyDistance*2
@@ -275,7 +275,7 @@ def var = new ICadGenerator() {
 						.toXMin()
 						.movex(rodToBoardDistance)
 				int stepOffset = 0;
-				def clearenceParts=[]
+				def clearanceParts=[]
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
 				Transform blockXAssembly =new Transform().movex(rodToBoardDistance*(3))
 				Transform blocZAssembly =new Transform().movez(-bearingHeight*2-rodlen)
@@ -300,7 +300,7 @@ def var = new ICadGenerator() {
 					println "Seperation dist for "+linkIndex+" is "+(rodSeperation*2)
 					CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
 							.movey(rodSeperation)
-					CSG clearence = new Cylinder(rodDiam/2+1, bracing-rodEmbedlen).toCSG()
+					CSG clearance = new Cylinder(rodDiam/2+1, bracing-rodEmbedlen).toCSG()
 
 					CSG upperBearing = moveDHValues(vitamin_linearBallBearing_LM10UU
 							.toZMax()
@@ -319,12 +319,12 @@ def var = new ICadGenerator() {
 								.movey(lastrodSeperation)
 						CSG lastlowerBearing = moveDHValues(vitamin_linearBallBearing_LM10UU.movez(rodEmbedlen),dh)
 								.movey(lastrodSeperation).hull()
-						clearenceParts.add(moveDHValues(clearence.movez(rodEmbedlen),dh)
+						clearanceParts.add(moveDHValues(clearance.movez(rodEmbedlen),dh)
 								.movey(lastrodSeperation))
-						clearenceParts.add(lastupperBearing)
-						clearenceParts.add(lastlowerBearing)
+						clearanceParts.add(lastupperBearing)
+						clearanceParts.add(lastlowerBearing)
 					}
-					clearenceParts.add(rod)
+					clearanceParts.add(rod)
 					upperBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					lowerBearing.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 					def vits=[
@@ -368,7 +368,7 @@ def var = new ICadGenerator() {
 				def SideBoards = []
 				//if(linkIndex==0) {
 				
-				double sideBoardX = linkIndex==0?0:cordClearenceRadius+rodToBoardDistance
+				double sideBoardX = linkIndex==0?0:cordClearanceRadius+rodToBoardDistance
 				double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistacne
 				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ).toCSG()
 								.toXMax()
@@ -420,11 +420,11 @@ def var = new ICadGenerator() {
 				CSG topBlock=topBottomBlock
 						.union(BackBrace.rotx(180).movez(braceBasez))
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistacne/2)
-						.difference(clearenceParts)
+						.difference(clearanceParts)
 				CSG bottomBlock = topBottomBlock
 						.union(BackBrace)
 						.movez(-sideBraceDistacne)
-						.difference(clearenceParts)
+						.difference(clearanceParts)
 
 
 
@@ -437,13 +437,13 @@ def var = new ICadGenerator() {
 					supportBlock=supportBlock
 							.union(
 							supportBlock
-							.movex(-(depthOcCSection +boxClearence/2)*Math.sqrt(2))
+							.movex(-(depthOcCSection +boxClearance/2)*Math.sqrt(2))
 							).hull()
 					bearingInCShape = supportBlock.rotz(-45).movey(calculatedTotalWidth-lastStageInset-bearingLocationOffset)
 							.union(supportBlock.rotz(45).movey(-calculatedTotalWidth+lastStageInset+bearingLocationOffset))
 				}
 				if(linkIndex!=0) {
-					bearingInCShape=bearingInCShape.difference(clearenceParts)
+					bearingInCShape=bearingInCShape.difference(clearanceParts)
 					bottomBlock=bottomBlock.union(bearingInCShape)
 				}
 
@@ -595,7 +595,7 @@ def var = new ICadGenerator() {
 
 					bearingBlock= moveDHValues(bearingBlock,kin.getDhLink(linkIndex))
 							.difference(vitamins)
-							.difference(clearenceParts)
+							.difference(clearanceParts)
 
 					makeLink2( back,    bearingBlock, kin,  linkIndex);
 				}
@@ -701,7 +701,7 @@ def var = new ICadGenerator() {
 							.move(frontPlate.getMaxX(),
 							frontPlate.getMinY()+cornerBoltInset,
 							frontPlate.getMaxZ()-cornerBoltInset)
-					double insetBoltFromCorner = linkIndex==0?0:cordClearenceRadius*2
+					double insetBoltFromCorner = linkIndex==0?0:cordClearanceRadius*2
 					Transform sideTopBackLeft = new Transform()
 							.move(leftSide.getMinX()+cornerBoltInset,
 							leftSide.getMinY(),
