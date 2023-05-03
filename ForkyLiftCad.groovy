@@ -219,7 +219,7 @@ def var = new ICadGenerator() {
 
 				double bracing = braceHeight
 				double height =rodlen - braceHeight -rodEmbedlen
-				double depthOcCSection = (2.0-linkIndex)*rodToBoardDistance*2+(pulleyWidth+pulleyClearanceDistance)*2+boxClearance
+				double depthOfCSection = (2.0-linkIndex)*rodToBoardDistance*2+(pulleyWidth+pulleyClearanceDistance)*2+boxClearance
 				try {
 					kin.setMaxEngineeringUnits(linkIndex,height)
 				}catch(Throwable t) {
@@ -244,10 +244,10 @@ def var = new ICadGenerator() {
 
 				}
 				double shaftHolderY=boardWidth
-				double shaftHolderX=rodToBoardDistance*2+depthOcCSection
+				double shaftHolderX=rodToBoardDistance*2+depthOfCSection
 				double topBottomZHeight = sideBraceDistance+rodEmbedlen
 				double BackBraceHeight = sideBraceDistance+bracing
-				double cutoutDepthTotal = depthOcCSection + boxClearance/2
+				double cutoutDepthTotal = depthOfCSection + boxClearance/2
 				double backBraceXDepth = shaftHolderX-cutoutDepthTotal
 				double braceBasez=sideBraceDistance+rodEmbedlen
 				double bearingLocationOffset = xyOfPulleyDistance*1
@@ -272,7 +272,7 @@ def var = new ICadGenerator() {
 						.movez(rodEmbedlen+zDisplacement)
 				CSG backBoard = board
 						.toXMax()
-						.movex(-rodToBoardDistance-depthOcCSection)
+						.movex(-rodToBoardDistance-depthOfCSection)
 				CSG frontBoard = board.difference(cutout)
 						.toXMin()
 						.movex(rodToBoardDistance)
@@ -439,7 +439,7 @@ def var = new ICadGenerator() {
 					supportBlock=supportBlock
 							.union(
 							supportBlock
-							.movex(-(depthOcCSection +boxClearance/2)*Math.sqrt(2))
+							.movex(-(depthOfCSection +boxClearance/2)*Math.sqrt(2))
 							).hull()
 					bearingInCShape = supportBlock.rotz(-45).movey(calculatedTotalWidth-lastStageInset-bearingLocationOffset)
 							.union(supportBlock.rotz(45).movey(-calculatedTotalWidth+lastStageInset+bearingLocationOffset))
