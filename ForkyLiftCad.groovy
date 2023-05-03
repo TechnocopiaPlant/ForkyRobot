@@ -676,7 +676,7 @@ def var = new ICadGenerator() {
 
 					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceThick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
-					newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
+					//newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
 					double cornerBoltInset = 22
 					Transform upperRight = new Transform()
 							.move(backPlate.getMinX(),
