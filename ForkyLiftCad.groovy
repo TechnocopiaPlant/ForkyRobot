@@ -370,8 +370,10 @@ def var = new ICadGenerator() {
 				def SideBoards = []
 				//if(linkIndex==0) {
 				
-				double sideBoardX = linkIndex==0?0:cordClearanceRadius+rodToBoardDistance
-				double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistance
+				//double sideBoardX = linkIndex==0?0:cordClearanceRadius+rodToBoardDistance		// now 0 for all stages
+				double sideBoardX = 0
+				//double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistance				// now 0 for all stages
+				double sideBoardZ = 0
 				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ).toCSG()
 								.toXMax()
 								.movex(rodToBoardDistance-sideBoardX)
@@ -855,6 +857,7 @@ def var = new ICadGenerator() {
 					c.setMfg({incoming->return null})
 				}
 				def boards = [backBoard]
+				//return SideBoards
 				boards.addAll(SideBoards)
 				if(linkIndex!=2) {
 					CSG box = frontBoard.getBoundingBox().toYMin()
