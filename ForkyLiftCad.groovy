@@ -299,7 +299,7 @@ def var = new ICadGenerator() {
 					double rodSeperation = i-(braceInsetDistanceArg1)
 					double lastrodSeperation = i-(lastBraceDist)
 
-					println "Seperation dist for "+linkIndex+" is "+(rodSeperation*2)
+					println "Separation dist for "+linkIndex+" is "+(rodSeperation*2)
 					CSG rod = new Cylinder(rodDiam/2, rodlen).toCSG()
 							.movey(rodSeperation)
 					CSG clearance = new Cylinder(rodDiam/2+1, bracing-rodEmbedlen).toCSG()
