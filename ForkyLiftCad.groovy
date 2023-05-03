@@ -655,26 +655,26 @@ def var = new ICadGenerator() {
 				def nutsAndBolts=[]
 				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
-					double sliceTHick=1
-					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceTHick))
-					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceTHick))
+					double sliceThick=1
+					CSG backPlate =c.intersect(c.getBoundingBox().toXMax().movex(c.getMinX()+sliceThick))
+					CSG frontPlate =c.intersect(c.getBoundingBox().toXMin().movex(c.getMaxX()-sliceThick))
 					boolean left = c.getMinY()<0
 					boolean right = c.getMaxY()>0
 					CSG leftSide
 					CSG rightSide
 					double staage = linkIndex==0?0:0
 					
-					CSG sideSlice = new Cube(c.getTotalX(),sliceTHick,c.getTotalZ()).toCSG()
+					CSG sideSlice = new Cube(c.getTotalX(),sliceThick,c.getTotalZ()).toCSG()
 									.toXMin()
 									.toZMin()
 									.movex(c.getMinX())
 									.movez(c.getMinZ())
 					double moveAwayFromPulley =c.getMinZ()>rodlen/2?0:xyOfPulleyDistance+5
 					
-					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceTHick-staage-moveAwayFromPulley))
+					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceThick-staage-moveAwayFromPulley))
 							.movey(moveAwayFromPulley)
 
-					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceTHick+staage+moveAwayFromPulley))
+					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceThick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
 					newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
 					double cornerBoltInset = 22
@@ -778,7 +778,7 @@ def var = new ICadGenerator() {
 							pullBolt=300
 						}
 						//if(linkIndex==0) {
-							if(tf.getY()>(shaftHolderY/2-sliceTHick)) {
+							if(tf.getY()>(shaftHolderY/2-sliceThick)) {
 								angle=180
 								pullnut=30
 								pullBolt=300
@@ -786,7 +786,7 @@ def var = new ICadGenerator() {
 								nutX=-90
 								isASide=true
 							}
-							if(tf.getY()<(-shaftHolderY/2+sliceTHick)) {
+							if(tf.getY()<(-shaftHolderY/2+sliceThick)) {
 								angle=180
 								pullnut=-30
 								pullBolt=-300
