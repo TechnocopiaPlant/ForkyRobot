@@ -41,9 +41,7 @@ def inPut = FileUtils.openInputStream(cachejson);
 def jsonString = IOUtils.toString(inPut);
 HashMap<String, Double> database = gson.fromJson(jsonString, TT_mapStringString);
 
-
-
-return new ICadGenerator(){
+def var = new ICadGenerator() {
 
 			Transform liftCleatAssembly  =new Transform().movex(50)
 			double gridUnits = database.baseBad
@@ -104,7 +102,7 @@ return new ICadGenerator(){
 			double calculatedTotalWidth = lineThreeWidth/2;
 			double braceInsetDistance=2*xyOfPulleyDistance
 			double sideBraceDistacne =braceInsetDistance/2
-			double pulleyClearenceDiameter=pulleyRadius+cordDiameter+pulleyClearenceDistance
+			double pulleyClearenceDiameter=pulleyRadius*2+cordDiameter+pulleyClearenceDistance
 			double cordClearenceRadius = cordDiameter/2+(pulleyClearenceDistance+4)
 			double CLEAT_PLACEMENT_BUCKET_TOP_DIAM = -cleatPlacement+(bucketTopDiam/3)//-wheelbase/2
 			double connectingBlockWidth = calculatedTotalWidth*2-(braceInsetDistance*2)*2-rodEmbedlen*2-boxClearence-xyOfPulleyDistance*2
@@ -1027,3 +1025,7 @@ return new ICadGenerator(){
 
 
 		}
+return var
+//def //var2 = var.pulleyGen(new Transform())
+//def var3 = var.pulleyGen(new Transform().movey(30))
+//return [var2.get('cut'), var3.get('vitamins')]
