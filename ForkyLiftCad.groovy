@@ -26,6 +26,8 @@ import eu.mihosoft.vrl.v3d.Transform
 import javafx.scene.paint.Color
 import javafx.scene.transform.Affine
 
+def dev_mode = false
+
 def bearingSize = "LM10UU"
 def pulleyBearingSize = "695zz"
 CSG pulleyBearingCad = Vitamins.get("ballBearing", pulleyBearingSize).hull()
@@ -1008,7 +1010,9 @@ def var = new ICadGenerator() {
 			@Override
 			public ArrayList<CSG> generateBody(MobileBase arg0) {
 				
-				
+				if (dev_mode) {
+					return [];					// Bypasses generating to mobile base
+				}
 				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(baseOfArmFromCenter)
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
