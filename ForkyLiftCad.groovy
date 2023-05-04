@@ -603,6 +603,30 @@ def var = new ICadGenerator() {
 
 					makeLink2( back,    bearingBlock, kin,  linkIndex);
 				}
+				
+				
+				
+				// This section is for making strut cut-outs in the side walls
+				if(linkIndex == 2 || linkIndex == 1) {
+					for(int i=0; i<SideBoards.size();i++) {
+						CSG SideBoard_replacement = SideBoards.get(i)
+						CSG SideBoard_cutout = SideBoard_replacement.intersect(bottomBlock)
+						SideBoard_cutout = SideBoard_cutout.getBoundingBox()
+						SideBoard_cutout = SideBoard_cutout.toolOffset(2)
+						SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
+						for(CSG c:back) {
+							if(c.getName().contains('Bottom-Pulley')) {
+								SideBoard_cutout = SideBoard_replacement.intersect(c)
+								if(SideBoard_cutout.getMaxX()) {
+									SideBoard_cutout = SideBoard_cutout.getBoundingBox()
+									SideBoard_cutout = SideBoard_cutout.toolOffset(2)
+									SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
+								}
+							}
+						}
+						SideBoards.set(i,SideBoard_replacement)
+					}
+				}
 
 				def braceBlocks = []
 				CSG bottomLeftBlock=null
@@ -632,6 +656,7 @@ def var = new ICadGenerator() {
 				}else {
 					braceBlocks.add(topBlock)
 				}
+				
 				if(bottomBlock.getTotalY()>maxPrinterDimention) {
 					double cutLine = bottomBlock.getMaxY()-bracing-braceInsetDistance
 					if(cutLine<1)
@@ -654,6 +679,7 @@ def var = new ICadGenerator() {
 				}else {
 					braceBlocks.add(bottomBlock)
 				}
+				
 				def nutsAndBolts=[]
 				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
@@ -857,7 +883,6 @@ def var = new ICadGenerator() {
 					c.setMfg({incoming->return null})
 				}
 				def boards = [backBoard]
-				//return SideBoards
 				boards.addAll(SideBoards)
 				if(linkIndex!=2) {
 					CSG box = frontBoard.getBoundingBox().toYMin()
@@ -897,7 +922,8 @@ def var = new ICadGenerator() {
 					back.add(c)
 				}
 
-
+				
+				//return SideBoards
 				return back;
 			}
 			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
@@ -1015,7 +1041,7 @@ def var = new ICadGenerator() {
 				
 				if (dev_mode) {
 					return [];					// Bypasses generating to mobile base
-				}
+				} 
 				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(baseOfArmFromCenter)
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
