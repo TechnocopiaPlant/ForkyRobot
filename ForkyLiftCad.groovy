@@ -271,24 +271,36 @@ def var = new ICadGenerator() {
 				double ZFrontCutout = rodlen-rodEmbedlen*2
 				double boardZTotal =rodlen+sideBraceDistance*2
 				double zDisplacement=0
+				double widthTopBoard = shaftHolderX - cutoutDepthTotal
 
 				if(linkIndex!=2) {
 					frontCutoutWidth = cutoutWidth
 					ZFrontCutout=boardZTotal
 					zDisplacement=-rodEmbedlen-sideBraceDistance
 				}
-				CSG board = new Cube(boardThickness,boardWidth+boardThickness*2,boardZTotal).toCSG()
+				CSG board = new Cube(boardThickness,boardWidth+boardThickness*2,boardZTotal+boardThickness).toCSG()
 						.toZMin()
-						.movez(-sideBraceDistance)
-				CSG cutout = new Cube(boardThickness,frontCutoutWidth,ZFrontCutout).toCSG()
+						.movez(-sideBraceDistance-boardThickness)
+				CSG cutout = new Cube(boardThickness,frontCutoutWidth,ZFrontCutout+boardThickness*2).toCSG()
 						.toZMin()
-						.movez(rodEmbedlen+zDisplacement)
+						.movez(rodEmbedlen+zDisplacement-boardThickness)
 				CSG backBoard = board
 						.toXMax()
 						.movex(-rodToBoardDistance-depthOcCSection)
 				CSG frontBoard = board.difference(cutout)
 						.toXMin()
 						.movex(rodToBoardDistance)
+				CSG topBottomBoard = new Cube(widthTopBoard,boardWidth+boardThickness*2,boardThickness).toCSG()
+						.toZMin()
+				CSG bottomBoard = topBottomBoard
+									.movex(-cutoutDepthTotal+boardThickness)
+									.movez(-sideBraceDistance-boardThickness)
+				CSG topBoard = bottomBoard.movez(boardThickness+rodlen+rodEmbedlen/2-sideBraceDistance/2+sideBraceDistance+braceBasez)
+						
+				if(dev_mode) {
+					//return [topBoard]
+				}
+				
 				int stepOffset = 0;
 				def clearanceParts=[]
 				double rodSeperationTotal=calculatedTotalWidth-bearingLocationOffset
@@ -387,11 +399,11 @@ def var = new ICadGenerator() {
 				double sideBoardX = 0
 				//double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistance				// now 0 for all stages
 				double sideBoardZ = 0
-				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ).toCSG()
+				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ+boardThickness).toCSG()
 								.toXMax()
 								.movex(rodToBoardDistance-sideBoardX)
 								.toZMin()
-								.movez(-sideBraceDistance+sideBoardZ)
+								.movez(-sideBraceDistance+sideBoardZ-boardThickness)
 				def sideBoardToYMaxMovey = SideBoard.toYMax().movey(-shaftHolderY/2)
 				SideBoards.add(sideBoardToYMaxMovey)
 				def sideBoardToYMinMovey = SideBoard.toYMin().movey(shaftHolderY/2)
@@ -442,9 +454,8 @@ def var = new ICadGenerator() {
 						.union(BackBrace)
 						.movez(-sideBraceDistance)
 						.difference(clearanceParts)
-
-
-
+						
+						
 				if(linkIndex!=0) {
 					CSG supportBlock = new Cylinder(
 							bearingBlcokBearingSection,
@@ -524,12 +535,24 @@ def var = new ICadGenerator() {
 
 						}
 					}
+					
 					bottomBlock=bottomBlock
 							.difference(topBottomBlockCutout.movez(-sideBraceDistance))
 							.difference(backBoard)
-
+							
+							if(dev_mode) {
+//								double xMove = bottomBlock.getMinX()
+//								Transform xMover = new Transform().movex(-xMove)
+//								double xDiff = Math.abs(bottomBlock.getMinX()-topBottomBlockCutout.getMinX())
+//								println("xDiff = ${xDiff}")
+//								double calcDiff = widthTopBoard
+//								println("calcDiff = ${calcDiff}")
+////								
+//								return [topBottomBlockCutout.movez(-sideBraceDistance).transformed(xMover),bottomBlock.transformed(xMover)]
+							}
 
 				}
+				
 				Transform topLeft = new Transform()
 						.rotZ(45)
 						.movez(rodlen+rodEmbedlen/2-sideBraceDistance/2 + sideBraceDistance+rodEmbedlen+4)
@@ -619,7 +642,7 @@ def var = new ICadGenerator() {
 				
 				
 				
-				// This section is for making strut cut-outs in the side walls
+				// This section is for making cut-outs for the struts in the side walls
 				if(linkIndex == 2 || linkIndex == 1) {
 					for(int i=0; i<SideBoards.size();i++) {
 						CSG SideBoard_replacement = SideBoards.get(i)
@@ -628,7 +651,8 @@ def var = new ICadGenerator() {
 						SideBoard_cutout = SideBoard_cutout.toolOffset(4)
 						SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
 						for(CSG c:back) {
-							if(c.getName().contains('Bottom-Pulley')) {
+							def cName = c.getName()
+							if(cName.contains('Bottom-Pulley')) {
 								SideBoard_cutout = SideBoard_replacement.intersect(c)
 								if(SideBoard_cutout.getMaxX()) {
 									SideBoard_cutout = SideBoard_cutout.getBoundingBox()
@@ -637,6 +661,15 @@ def var = new ICadGenerator() {
 								}
 							}
 						}
+						SideBoards.set(i,SideBoard_replacement)
+					}
+				}
+				// This section is for making cut-outs for the top & bottom boards in the side walls
+				if(linkIndex == 1 || linkIndex == 0) {
+					for(int i=0; i<SideBoards.size();i++) {
+						CSG SideBoard_replacement = SideBoards.get(i)
+						SideBoard_replacement = SideBoard_replacement.difference(topBoard)
+						SideBoard_replacement = SideBoard_replacement.difference(bottomBoard)
 						SideBoards.set(i,SideBoard_replacement)
 					}
 				}
@@ -916,6 +949,20 @@ def var = new ICadGenerator() {
 				}
 				def boards = [backBoard]
 				boards.addAll(SideBoards)
+				if(linkIndex == 0 || linkIndex == 1) {
+					boards.add(bottomBoard)
+					boards.add(topBoard)
+				}
+				if(dev_mode && false) {
+					double xMove = bottomBlock.getMinX()
+					Transform xMover = new Transform().movex(-xMove)
+					double xDiff = Math.abs(bottomBlock.getMinX()-topBottomBlockCutout.getMinX())
+					println("xDiff = ${xDiff}")
+					double calcZ = rodlen+rodEmbedlen/2+sideBraceDistance/2-bracing
+					println("calcZ = ${calcZ}")
+					
+					boards.add(topBottomBoard)
+				}
 				if(linkIndex!=2) {
 					CSG box = frontBoard.getBoundingBox().toYMin()
 					CSG left = frontBoard.intersect(box)
@@ -953,9 +1000,7 @@ def var = new ICadGenerator() {
 					c.addExportFormat("svg")
 					back.add(c)
 				}
-
 				
-				//return SideBoards
 				return back;
 			}
 			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
