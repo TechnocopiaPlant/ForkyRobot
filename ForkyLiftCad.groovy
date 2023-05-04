@@ -154,7 +154,7 @@ def var = new ICadGenerator() {
 							cutout
 						])
 
-				CSG pulleyClearanceShape = new Cylinder(pulleyClearanceDiameter/2, pulleyWidth+pulleyClearanceDistance).toCSG()
+				CSG pulleyClearanceShape = new Cylinder(pulleyClearanceDiameter/2+2, pulleyWidth+pulleyClearanceDistance).toCSG()
 						.rotx(90)
 						.movey(-pulleyWidth/2-pulleyClearanceDistance/2)
 
@@ -217,9 +217,9 @@ def var = new ICadGenerator() {
 				// This section shortcuts CAD generation in dev mode
 				if(dev_mode) {
 					if(linkIndex == 2) {
-						return []
-					} else if (linkIndex == 1) {
 //						return []
+					} else if (linkIndex == 1) {
+						return []
 					}
 					else if (linkIndex == 0) {
 						return []
@@ -624,14 +624,14 @@ def var = new ICadGenerator() {
 						CSG SideBoard_replacement = SideBoards.get(i)
 						CSG SideBoard_cutout = SideBoard_replacement.intersect(bottomBlock)
 						SideBoard_cutout = SideBoard_cutout.getBoundingBox()
-						SideBoard_cutout = SideBoard_cutout.toolOffset(2)
+						SideBoard_cutout = SideBoard_cutout.toolOffset(4)
 						SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
 						for(CSG c:back) {
 							if(c.getName().contains('Bottom-Pulley')) {
 								SideBoard_cutout = SideBoard_replacement.intersect(c)
 								if(SideBoard_cutout.getMaxX()) {
 									SideBoard_cutout = SideBoard_cutout.getBoundingBox()
-									SideBoard_cutout = SideBoard_cutout.toolOffset(2)
+									SideBoard_cutout = SideBoard_cutout.toolOffset(4)
 									SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
 								}
 							}
@@ -713,6 +713,10 @@ def var = new ICadGenerator() {
 					
 					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceThick-staage-moveAwayFromPulley))
 							.movey(moveAwayFromPulley)
+							
+					if(dev_mode) {
+						//return [rightSide]
+					}
 
 					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceThick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
