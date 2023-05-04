@@ -84,6 +84,7 @@ def var = new ICadGenerator() {
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
 			double pulleyClearanceDistance=1
+			double offsetSideBoltPulley=27
 			double cleatBracingDepthDH=101.0
 			double plasticOffsetDistance =10
 
@@ -219,10 +220,10 @@ def var = new ICadGenerator() {
 					if(linkIndex == 2) {
 //						return []
 					} else if (linkIndex == 1) {
-						return []
+//						return []
 					}
 					else if (linkIndex == 0) {
-						return []
+//						return []
 					}
 				}
 				println bearingType
@@ -276,7 +277,7 @@ def var = new ICadGenerator() {
 					ZFrontCutout=boardZTotal
 					zDisplacement=-rodEmbedlen-sideBraceDistance
 				}
-				CSG board = new Cube(boardThickness,boardWidth,boardZTotal).toCSG()
+				CSG board = new Cube(boardThickness,boardWidth+boardThickness*2,boardZTotal).toCSG()
 						.toZMin()
 						.movez(-sideBraceDistance)
 				CSG cutout = new Cube(boardThickness,frontCutoutWidth,ZFrontCutout).toCSG()
@@ -713,14 +714,11 @@ def var = new ICadGenerator() {
 					
 					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceThick-staage-moveAwayFromPulley))
 							.movey(moveAwayFromPulley)
-							
-					if(dev_mode) {
-						//return [rightSide]
-					}
-
 					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceThick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
-					//newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
+					if(dev_mode) {
+						//newBraceBlocks.addAll([backPlate])//,frontPlate,rightSide,leftSide])
+					}
 					double cornerBoltInset = 22
 					Transform upperRight = new Transform()
 							.move(backPlate.getMinX(),
@@ -757,7 +755,7 @@ def var = new ICadGenerator() {
 							leftSide.getMinY(),
 							leftSide.getMinZ()+cornerBoltInset)
 					Transform sideBottomFrontLeft = new Transform()
-							.move(leftSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							.move(leftSide.getMaxX()-cornerBoltInset-insetBoltFromCorner+offsetSideBoltPulley,
 							leftSide.getMinY(),
 							leftSide.getMinZ()+cornerBoltInset)
 					Transform sideTopFrontLeft = new Transform()
@@ -774,7 +772,7 @@ def var = new ICadGenerator() {
 							rightSide.getMaxY(),
 							rightSide.getMinZ()+cornerBoltInset)
 					Transform sideBottomFrontRight = new Transform()
-							.move(rightSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							.move(rightSide.getMaxX()-cornerBoltInset-insetBoltFromCorner+offsetSideBoltPulley,
 							rightSide.getMaxY(),
 							rightSide.getMinZ()+cornerBoltInset)
 					Transform sideTopFrontRight = new Transform()
@@ -790,13 +788,24 @@ def var = new ICadGenerator() {
 						frontLeft,
 						frontRight
 						]
+					if(dev_mode) {
+						boltLocations =[]
+					}
 					if(left) {
 						boltLocations.addAll([sideTopBackLeft,sideBottomBackLeft])
 						if(c.getMinZ()>rodlen/2) {
 							boltLocations.addAll([sideTopFrontLeft])
 							
-						}else
-							boltLocations.addAll([sideBottomFrontLeft])
+						}else {
+							if(linkIndex == 2) {
+								boltLocations.addAll([sideBottomFrontLeft])
+							} else if (linkIndex == 1) {
+								boltLocations.addAll([sideBottomFrontLeft])
+								boltLocations.addAll([sideBottomFrontLeft.movex(-60)])
+							} else if (linkIndex == 0) {
+								boltLocations.addAll([sideBottomFrontLeft.movex(-20)])
+							}
+						}
 							
 					}
 					if(right) {
@@ -804,9 +813,16 @@ def var = new ICadGenerator() {
 						if(c.getMinZ()>rodlen/2) {
 							boltLocations.addAll([sideTopFrontRight])
 							
-						}else
-							boltLocations.addAll([sideBottomFrontRight])
-							
+						}else {
+							if(linkIndex == 2) {
+								boltLocations.addAll([sideBottomFrontRight])
+							} else if (linkIndex == 1) {
+								boltLocations.addAll([sideBottomFrontRight])
+								boltLocations.addAll([sideBottomFrontRight.movex(-60)])
+							} else if (linkIndex == 0) {
+								boltLocations.addAll([sideBottomFrontRight.movex(-20)])
+							}
+						}
 					}
 					def myBits=[]
 					for(Transform tf:boltLocations) {
@@ -821,7 +837,7 @@ def var = new ICadGenerator() {
 							pullnut=30
 							pullBolt=300
 						}
-						//if(linkIndex==0) {
+						//if(!dev_mode) {
 							if(tf.getY()>(shaftHolderY/2-sliceThick)) {
 								angle=180
 								pullnut=30
@@ -1040,10 +1056,12 @@ def var = new ICadGenerator() {
 				bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				liftCleat.setColor(Color.PINK)
 				liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-				back.add(bucket)
+				if(!dev_mode) {
+					back.add(bucket)
+					back.add(bucketCleat)
+					back.add(liftCleat)
+				}
 				bucket.setName("bucketItself")
-				back.add(bucketCleat)
-				back.add(liftCleat)
 				liftCleat.setName("EOAT-LiftCleat")
 				bucketCleat.setName("bucket-LiftCleat")
 				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
