@@ -84,6 +84,7 @@ def var = new ICadGenerator() {
 			double pulleyBearingSeperation = 2
 			double pulleySupportThickness = 4.5
 			double pulleyClearanceDistance=1
+			double offsetSideBoltPulley=27
 			double cleatBracingDepthDH=101.0
 			double plasticOffsetDistance =10
 
@@ -154,7 +155,7 @@ def var = new ICadGenerator() {
 							cutout
 						])
 
-				CSG pulleyClearanceShape = new Cylinder(pulleyClearanceDiameter/2, pulleyWidth+pulleyClearanceDistance).toCSG()
+				CSG pulleyClearanceShape = new Cylinder(pulleyClearanceDiameter/2+2, pulleyWidth+pulleyClearanceDistance).toCSG()
 						.rotx(90)
 						.movey(-pulleyWidth/2-pulleyClearanceDistance/2)
 
@@ -213,6 +214,18 @@ def var = new ICadGenerator() {
 			}
 			@Override
 			public ArrayList<CSG> generateCad(DHParameterKinematics kin, int linkIndex) {
+				
+				// This section shortcuts CAD generation in dev mode
+				if(dev_mode) {
+					if(linkIndex == 2) {
+//						return []
+					} else if (linkIndex == 1) {
+//						return []
+					}
+					else if (linkIndex == 0) {
+//						return []
+					}
+				}
 				println bearingType
 				ArrayList<CSG> back =[]
 				int stepIndex = kin.getNumberOfLinks()-linkIndex-1
@@ -264,7 +277,7 @@ def var = new ICadGenerator() {
 					ZFrontCutout=boardZTotal
 					zDisplacement=-rodEmbedlen-sideBraceDistance
 				}
-				CSG board = new Cube(boardThickness,boardWidth,boardZTotal).toCSG()
+				CSG board = new Cube(boardThickness,boardWidth+boardThickness*2,boardZTotal).toCSG()
 						.toZMin()
 						.movez(-sideBraceDistance)
 				CSG cutout = new Cube(boardThickness,frontCutoutWidth,ZFrontCutout).toCSG()
@@ -370,8 +383,10 @@ def var = new ICadGenerator() {
 				def SideBoards = []
 				//if(linkIndex==0) {
 				
-				double sideBoardX = linkIndex==0?0:cordClearanceRadius+rodToBoardDistance
-				double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistance
+				//double sideBoardX = linkIndex==0?0:cordClearanceRadius+rodToBoardDistance		// now 0 for all stages
+				double sideBoardX = 0
+				//double sideBoardZ = linkIndex==0?0:braceHeight+sideBraceDistance				// now 0 for all stages
+				double sideBoardZ = 0
 				CSG SideBoard = new Cube(shaftHolderX-sideBoardX,boardThickness,boardZTotal-sideBoardZ).toCSG()
 								.toXMax()
 								.movex(rodToBoardDistance-sideBoardX)
@@ -601,6 +616,30 @@ def var = new ICadGenerator() {
 
 					makeLink2( back,    bearingBlock, kin,  linkIndex);
 				}
+				
+				
+				
+				// This section is for making strut cut-outs in the side walls
+				if(linkIndex == 2 || linkIndex == 1) {
+					for(int i=0; i<SideBoards.size();i++) {
+						CSG SideBoard_replacement = SideBoards.get(i)
+						CSG SideBoard_cutout = SideBoard_replacement.intersect(bottomBlock)
+						SideBoard_cutout = SideBoard_cutout.getBoundingBox()
+						SideBoard_cutout = SideBoard_cutout.toolOffset(4)
+						SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
+						for(CSG c:back) {
+							if(c.getName().contains('Bottom-Pulley')) {
+								SideBoard_cutout = SideBoard_replacement.intersect(c)
+								if(SideBoard_cutout.getMaxX()) {
+									SideBoard_cutout = SideBoard_cutout.getBoundingBox()
+									SideBoard_cutout = SideBoard_cutout.toolOffset(4)
+									SideBoard_replacement = SideBoard_replacement.difference(SideBoard_cutout)
+								}
+							}
+						}
+						SideBoards.set(i,SideBoard_replacement)
+					}
+				}
 
 				def braceBlocks = []
 				CSG bottomLeftBlock=null
@@ -630,6 +669,7 @@ def var = new ICadGenerator() {
 				}else {
 					braceBlocks.add(topBlock)
 				}
+				
 				if(bottomBlock.getTotalY()>maxPrinterDimention) {
 					double cutLine = bottomBlock.getMaxY()-bracing-braceInsetDistance
 					if(cutLine<1)
@@ -652,6 +692,7 @@ def var = new ICadGenerator() {
 				}else {
 					braceBlocks.add(bottomBlock)
 				}
+				
 				def nutsAndBolts=[]
 				def newBraceBlocks=[]
 				for(CSG c:braceBlocks) {
@@ -673,10 +714,11 @@ def var = new ICadGenerator() {
 					
 					rightSide = c.intersect(sideSlice.toYMin().movey(shaftHolderY/2-sliceThick-staage-moveAwayFromPulley))
 							.movey(moveAwayFromPulley)
-
 					leftSide =c.intersect(sideSlice.toYMax().movey(-shaftHolderY/2+sliceThick+staage+moveAwayFromPulley))
 							.movey(-moveAwayFromPulley)
-					//newBraceBlocks.addAll([backPlate,frontPlate,rightSide,leftSide])
+					if(dev_mode) {
+						//newBraceBlocks.addAll([backPlate])//,frontPlate,rightSide,leftSide])
+					}
 					double cornerBoltInset = 22
 					Transform upperRight = new Transform()
 							.move(backPlate.getMinX(),
@@ -713,7 +755,7 @@ def var = new ICadGenerator() {
 							leftSide.getMinY(),
 							leftSide.getMinZ()+cornerBoltInset)
 					Transform sideBottomFrontLeft = new Transform()
-							.move(leftSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							.move(leftSide.getMaxX()-cornerBoltInset-insetBoltFromCorner+offsetSideBoltPulley,
 							leftSide.getMinY(),
 							leftSide.getMinZ()+cornerBoltInset)
 					Transform sideTopFrontLeft = new Transform()
@@ -730,7 +772,7 @@ def var = new ICadGenerator() {
 							rightSide.getMaxY(),
 							rightSide.getMinZ()+cornerBoltInset)
 					Transform sideBottomFrontRight = new Transform()
-							.move(rightSide.getMaxX()-cornerBoltInset-insetBoltFromCorner,
+							.move(rightSide.getMaxX()-cornerBoltInset-insetBoltFromCorner+offsetSideBoltPulley,
 							rightSide.getMaxY(),
 							rightSide.getMinZ()+cornerBoltInset)
 					Transform sideTopFrontRight = new Transform()
@@ -746,13 +788,24 @@ def var = new ICadGenerator() {
 						frontLeft,
 						frontRight
 						]
+					if(dev_mode) {
+						boltLocations =[]
+					}
 					if(left) {
 						boltLocations.addAll([sideTopBackLeft,sideBottomBackLeft])
 						if(c.getMinZ()>rodlen/2) {
 							boltLocations.addAll([sideTopFrontLeft])
 							
-						}else
-							boltLocations.addAll([sideBottomFrontLeft])
+						}else {
+							if(linkIndex == 2) {
+								boltLocations.addAll([sideBottomFrontLeft])
+							} else if (linkIndex == 1) {
+								boltLocations.addAll([sideBottomFrontLeft])
+								boltLocations.addAll([sideBottomFrontLeft.movex(-60)])
+							} else if (linkIndex == 0) {
+								boltLocations.addAll([sideBottomFrontLeft.movex(-20)])
+							}
+						}
 							
 					}
 					if(right) {
@@ -760,9 +813,16 @@ def var = new ICadGenerator() {
 						if(c.getMinZ()>rodlen/2) {
 							boltLocations.addAll([sideTopFrontRight])
 							
-						}else
-							boltLocations.addAll([sideBottomFrontRight])
-							
+						}else {
+							if(linkIndex == 2) {
+								boltLocations.addAll([sideBottomFrontRight])
+							} else if (linkIndex == 1) {
+								boltLocations.addAll([sideBottomFrontRight])
+								boltLocations.addAll([sideBottomFrontRight.movex(-60)])
+							} else if (linkIndex == 0) {
+								boltLocations.addAll([sideBottomFrontRight.movex(-20)])
+							}
+						}
 					}
 					def myBits=[]
 					for(Transform tf:boltLocations) {
@@ -777,7 +837,7 @@ def var = new ICadGenerator() {
 							pullnut=30
 							pullBolt=300
 						}
-						//if(linkIndex==0) {
+						//if(!dev_mode) {
 							if(tf.getY()>(shaftHolderY/2-sliceThick)) {
 								angle=180
 								pullnut=30
@@ -894,7 +954,8 @@ def var = new ICadGenerator() {
 					back.add(c)
 				}
 
-
+				
+				//return SideBoards
 				return back;
 			}
 			private void makeLink0(ArrayList<CSG> back, double  connectingBlockWidth,double bearingBlcokBearingSection,CSG bearingBlock,DHParameterKinematics kin, int linkIndex) {
@@ -995,10 +1056,12 @@ def var = new ICadGenerator() {
 				bucket.setManipulator(kin.getLinkObjectManipulator(linkIndex))
 				liftCleat.setColor(Color.PINK)
 				liftCleat.setManipulator(kin.getLinkObjectManipulator(linkIndex))
-				back.add(bucket)
+				if(!dev_mode) {
+					back.add(bucket)
+					back.add(bucketCleat)
+					back.add(liftCleat)
+				}
 				bucket.setName("bucketItself")
-				back.add(bucketCleat)
-				back.add(liftCleat)
 				liftCleat.setName("EOAT-LiftCleat")
 				bucketCleat.setName("bucket-LiftCleat")
 				bucket.addAssemblyStep( 16, new Transform().movez(bucketHeightCentering*2))
@@ -1012,7 +1075,7 @@ def var = new ICadGenerator() {
 				
 				if (dev_mode) {
 					return [];					// Bypasses generating to mobile base
-				}
+				} 
 				arg0.getAllDHChains().get(0).setRobotToFiducialTransform(baseOfArmFromCenter)
 				HashMap<String,ArrayList<CSG>> bb =pulleyGen(new Transform())
 				def back =[]
