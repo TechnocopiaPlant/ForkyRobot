@@ -213,6 +213,18 @@ def var = new ICadGenerator() {
 			}
 			@Override
 			public ArrayList<CSG> generateCad(DHParameterKinematics kin, int linkIndex) {
+				
+				// This section shortcuts CAD generation in dev mode
+				if(dev_mode) {
+					if(linkIndex == 2) {
+						return []
+					} else if (linkIndex == 1) {
+//						return []
+					}
+					else if (linkIndex == 0) {
+						return []
+					}
+				}
 				println bearingType
 				ArrayList<CSG> back =[]
 				int stepIndex = kin.getNumberOfLinks()-linkIndex-1
